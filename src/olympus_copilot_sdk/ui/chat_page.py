@@ -20,7 +20,7 @@ from olympus_copilot_sdk.vector_db_02.agents import Stage, VectorOrchestrator
 _STAGE_LABELS: dict[Stage, str] = {
     "zeus_thinking": "Zeus is thinking",
     "delegating": "Zeus is delegating",
-    "hercules_working": "Hercules is searching Milvus",
+    "hercules_working": "Hercules is searching the hybrid index",
     "hercules_done": "Hercules returned evidence",
     "zeus_final": "Zeus is synthesizing",
 }

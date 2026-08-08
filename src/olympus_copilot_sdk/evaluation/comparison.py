@@ -12,6 +12,14 @@ from olympus_copilot_sdk.knowledge_01.agents import KnowledgeOrchestrator, Stage
 Preference = Literal["01_Knowledge", "02_Vector_DB", "Tie"]
 
 
+def _empty_citation_map() -> dict[str, str]:
+    return {}
+
+
+def _empty_topic_citations() -> dict[str, tuple[str, ...]]:
+    return {}
+
+
 @dataclass(frozen=True)
 class UsageSnapshot:
     input_tokens: int
@@ -32,6 +40,10 @@ class ResultSnapshot:
     sources: list[str]
     usage: UsageSnapshot
     approach: str
+    citation_map: dict[str, str] = field(default_factory=_empty_citation_map)
+    citation_display_map: dict[str, str] = field(default_factory=_empty_citation_map)
+    query_mode: str = "targeted"
+    topic_citation_map: dict[str, tuple[str, ...]] = field(default_factory=_empty_topic_citations)
 
 
 @dataclass(frozen=True)
@@ -126,5 +138,9 @@ def _evaluation(result: ResultLike, latency_seconds: float) -> ApproachEvaluatio
             usage.has_sdk_cost,
         ),
         approach=result.approach,
+        citation_map=dict(getattr(result, "citation_map", {}) or {}),
+        citation_display_map=dict(getattr(result, "citation_display_map", {}) or {}),
+        query_mode=str(getattr(result, "query_mode", "targeted")),
+        topic_citation_map=dict(getattr(result, "topic_citation_map", {}) or {}),
     )
     return ApproachEvaluation(snapshot, evaluate_response(result, latency_seconds))

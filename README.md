@@ -13,12 +13,11 @@ The application uses the same GitHub Copilot model for both agents and reports m
 - On-demand lexical baseline evaluation using stored vector-chat prompts
 - Response, source, token, latency, cost, and grounding-proxy comparison
 - Support for HTML, PDF, DOCX, XLSX, CSV, JSON, Markdown, source code, and other text formats
-- Source citations using paths relative to `data/`
+- Stable excerpt citations (`[S1]`, `[S2]`, ...) mapped to source paths and unique locations
 - Visible Zeus-to-Hercules execution stages
-- Persistent, expandable process trace for each completed answer
 - Session-level token and cost tracking from Copilot SDK usage events
 - Configurable model and fallback token pricing
-- Data inventory showing indexed, skipped, and chunk counts
+- Semantic chunk count in the Chatbot sidebar
 - Prompt-injection safeguards for retrieved source text
 - Strict Pyright, Ruff, pytest, and coverage configuration
 
@@ -69,19 +68,31 @@ import-safe names `knowledge_01` and `vector_db_02`. Their UI labels remain exac
 
 `02_Vector_DB` is the complete production application stack and owns:
 
-- 800-character semantic chunks with 120-character overlap
+- Paragraph- and sentence-aware child chunks capped at 800 characters with bounded overlap
+- PDF page preservation and adjacent parent sections targeted at roughly 1,600-2,400 characters,
+   with a hard 2,400-character parent bound
 - Local `BAAI/bge-small-en-v1.5` embeddings through FastEmbed
 - A 384-dimensional cosine index in file-backed Milvus Lite
-- A content and model fingerprint that rebuilds the collection only when inputs change
+- Deterministic targeted-versus-broad query classification
+- Targeted hybrid retrieval using dense candidates, local BM25-like ranks, reciprocal rank fusion,
+   deduplication, and source-aware diversity reranking over compact child evidence
+- Broad hierarchical retrieval that identifies a primary document, selects bounded parent evidence
+   across distinct locations and represented generic topic families, and uses related documents only
+   for represented coverage missing from the primary
+- Batched embedding and insertion plus chunking, retrieval, content, and model fingerprints that
+   rebuild the collection only when relevant inputs or settings change
 - Its own extraction, retrieval contracts, prompts, skills, tools, and agent orchestration
 
 Generated databases, metadata, and downloaded embedding models live under `.olympus/` and are not
 committed. The first vector query downloads the embedding model and can take longer; subsequent
 queries reuse both the model cache and Milvus collection.
 
+The embedding model remains `BAAI/bge-small-en-v1.5`. Improving candidate generation and ranking
+avoids the download, memory, and first-query latency regression of switching to a larger model.
+
 ### Evaluation
 
-Every Chatbot query runs only the three-call `02_Vector_DB` Zeus/Hercules workflow. It stores the
+Every Chatbot query runs only the two-call `02_Vector_DB` Zeus/Hercules workflow. It stores the
 prompt, model, vector response, usage, latency, and metrics as a pending evaluation record. No
 `01_Knowledge` model calls or tokens are spent during normal chat.
 
@@ -99,15 +110,17 @@ For completed baseline runs, the Evaluation page reports:
 - Valid citations per 1,000 model tokens
 - Uncertainty disclosure when evidence is reported missing
 - Response length and a transparent deterministic quality proxy
+- Broad evidence-topic citation completeness when available, reported separately from quality
 - Human preference for `01_Knowledge`, `02_Vector_DB`, or a tie
 
 The quality score is a local operational proxy composed from citation validity, source coverage,
-grounded-sentence ratio, and concision. It does not claim to measure factual correctness. No judge
-model is called, so evaluation itself adds no model tokens or cost.
+grounded-sentence ratio, and concision. Evidence-topic completeness does not change this weighting,
+because the lexical baseline has no equivalent retrieved-topic contract. Neither metric claims to
+measure factual correctness. No judge model is called, so evaluation adds no model tokens or cost.
 
 ## Request Flow
 
-Normal chat uses three vector-stack model calls. Evaluation optionally adds three baseline calls:
+Normal chat uses two vector-stack model calls. Evaluation optionally adds three baseline calls:
 
 ```mermaid
 sequenceDiagram
@@ -125,10 +138,8 @@ sequenceDiagram
    Launcher->>CLI: Start headless server with random token
    Launcher->>UI: Start with server URL and token
    UI->>VZ: User prompt
-   VZ->>Model: Create semantic retrieval brief
-   Model-->>VZ: Retrieval brief
-   UI->>VDB: Embed query and search Milvus Lite
-   VDB-->>VH: Six semantic excerpts
+   UI->>VDB: Hybrid search the original query
+   VDB-->>VH: Targeted children or broad parent sections with stable IDs
    VH->>Model: Produce grounded evidence report
    Model-->>VH: Cited report
    VH-->>VZ: Cited evidence
@@ -147,23 +158,32 @@ sequenceDiagram
 
 1. **User to Zeus**
    - Streamlit receives the prompt.
-   - Zeus creates a short retrieval brief of at most 80 words.
-   - The UI displays `Zeus is thinking` and `Zeus is talking to Hercules`.
+   - The original prompt goes directly to deterministic hybrid retrieval.
+   - The UI displays the Zeus and Hercules workflow stages.
 
 2. **Production retrieval**
-   - `02_Vector_DB` embeds the query and searches semantic chunks in Milvus Lite.
-   - Its six highest-scoring chunks are supplied to its Hercules session.
+    - Deterministic cue detection classifies requests as targeted or broad; narrow process questions
+       remain targeted.
+   - `02_Vector_DB` combines Milvus dense candidates with package-local BM25-like candidates.
+    - Targeted mode selects up to six fused, deduplicated, diverse child excerpts.
+    - Broad mode chooses a primary document and selects up to ten bounded parent sections within a
+       20,000-character evidence budget across represented topic families.
+    - Evaluation maps each citation ID to its underlying source; display legends add page, section,
+       or stable chunk location.
 
 3. **Hercules research**
-   - Hercules receives the user request, Zeus's brief, and retrieved excerpts.
+   - Hercules receives the user request and retrieved excerpts.
    - Retrieved excerpts are explicitly treated as untrusted data, not instructions.
-   - Hercules answers only from those excerpts and cites substantive claims as `[Source: relative/path]`.
-   - The UI displays `Hercules is searching the data` and `Hercules is responding to Zeus`.
+   - Hercules answers only from those excerpts and cites substantive claims as `[S1]`.
+   - The UI displays `Hercules is searching the hybrid index` and `Hercules returned evidence`.
 
 4. **Zeus synthesis**
    - Zeus reviews Hercules's cited report.
-   - Zeus returns a concise, context-grounded final response.
-   - The answer, sources, and complete process trace are stored in Streamlit session state.
+    - Targeted responses remain capped at 300 words. Broad summaries may use up to 900 words, while
+       the broad Hercules report is capped at 1,100 words.
+    - Broad prompts cover every retrieved topic family with evidence and prohibit absent inventions.
+    - The application appends the canonical ID-to-source-and-location legend deterministically.
+   - The answer, sources, usage, latency, and evaluation metrics are stored in session state.
 
 5. **Optional baseline evaluation**
    - Evaluation runs `01_Knowledge` only after explicit user action.
@@ -323,9 +343,11 @@ Unsupported, unreadable, empty, and binary files are skipped during extraction.
 - Results per query: `6`
 
 These limits and the in-memory hybrid sparse-vector index apply only to the on-demand
-`01_Knowledge` baseline. The production `02_Vector_DB` stack uses 800-character chunks with
-120-character overlap, FastEmbed vectors, and a persistent Milvus Lite collection. Neither stack
-sends the complete data folder to GitHub Copilot; only selected excerpts enter Hercules's prompt.
+`01_Knowledge` baseline. The production `02_Vector_DB` stack uses 800-character child chunks with
+120-character overlap, bounded parent sections, FastEmbed vectors, and a persistent Milvus Lite
+collection. Neither stack sends the complete data folder to GitHub Copilot; only selected excerpts
+enter Hercules's prompt. Chunk, parent, location, schema, and retrieval versions participate in the
+fingerprint, so the first query after this upgrade rebuilds an older collection once.
 
 ## Agent Responsibilities
 
@@ -334,7 +356,7 @@ sends the complete data folder to GitHub Copilot; only selected excerpts enter H
 Zeus is the user-facing orchestrator. It:
 
 - Interprets the request
-- Produces a compact evidence-retrieval brief
+- Sends vector requests directly to deterministic retrieval; the baseline retains its brief step
 - Delegates research to Hercules
 - Reviews Hercules's report
 - Produces the final response
@@ -360,7 +382,7 @@ it shows:
 
 1. `Zeus is thinking`
 2. `Zeus is delegating`
-3. `Hercules is searching Milvus`
+3. `Hercules is searching the hybrid index`
 4. `Hercules returned evidence`
 5. `Zeus is synthesizing`
 
@@ -466,25 +488,11 @@ uv run --extra dev pip-audit
 
 ## Verified Behavior
 
-The production vector workflow was browser-verified with:
-
-```text
-Who is Toad, and what does the provided book say about his personality?
-```
-
-The vector stack:
-
-- Created a Zeus retrieval brief
-- Embedded the query and searched the persistent Milvus Lite collection
-- Had Hercules produce a cited evidence report
-- Had Zeus synthesize a context-grounded answer
-- Rendered the response and sources in Streamlit
-- Recorded three isolated vector model calls and SDK token usage
-
-The Evaluation page was separately verified to keep the lexical result pending until explicit user
-action. Running the baseline adds three isolated calls for that selected record.
-
-The exact token count varies because model outputs are nondeterministic.
+Deterministic tests cover hierarchical chunk bounds, hybrid candidate recovery, broad primary and
+topic selection, unique location citations, Milvus reuse/rebuild/close/release/concurrency states,
+canonical and legacy citation validity, evidence-topic completeness, two-call vector orchestration,
+and explicit baseline routing. A live broad-summary Copilot benchmark is still required to measure
+model-dependent completeness, quality, latency, and token changes.
 
 ## Troubleshooting
 
@@ -521,16 +529,18 @@ Do not use `uv run streamlit run app.py` for this project. The launcher starts t
 STREAMLIT_PORT=8502 uv run python run_app.py
 ```
 
-### A file appears under skipped files
+### A file is not represented in answers
 
-Confirm that it uses a supported extension, contains extractable text, and is readable. Scanned image-only PDFs require OCR, which is not currently implemented.
+Confirm that it uses a supported extension, contains extractable text, and is readable. Scanned
+image-only PDFs require OCR, which is not currently implemented.
 
 ### Weak or irrelevant retrieval
 
 - Ask a more specific question using concepts present in the source.
 - Use descriptive filenames.
 - Remove generated CSS/JS artifacts when they are not useful sources.
-- Adjust semantic chunk size, overlap, or result limit if the corpus changes substantially.
+- Adjust chunking, candidate, fusion, diversity, or result-limit settings if the corpus changes
+   substantially; changing them invalidates the persistent index fingerprint.
 
 ## Current Limitations
 
@@ -539,8 +549,9 @@ Confirm that it uses a supported extension, contains extractable text, and is re
 - PDF extraction does not perform OCR.
 - Images are skipped.
 - XLS legacy files (`.xls`) are unsupported.
-- Only the selected semantic excerpts are sent to Hercules; there is no iterative retrieval loop.
-- Each Chatbot turn uses three vector model calls; each requested baseline adds three lexical calls.
+- Only the selected hybrid-ranked excerpts are sent to Hercules; there is no iterative retrieval
+   loop.
+- Each Chatbot turn uses two vector model calls; each requested baseline adds three lexical calls.
 - Conversation history is displayed but is not currently injected into new agent prompts.
 - Cost reporting depends on SDK billing metadata or manually configured fallback rates.
 - Evaluation records are Streamlit session state, not a durable evaluation store.
