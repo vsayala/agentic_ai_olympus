@@ -2,7 +2,7 @@ from pathlib import Path
 
 from docx import Document
 
-from olympus_copilot_sdk.knowledge import KnowledgeBase
+from olympus_copilot_sdk.knowledge_01.lexical import KnowledgeBase
 
 
 def test_indexes_html_and_plain_text(tmp_path: Path) -> None:

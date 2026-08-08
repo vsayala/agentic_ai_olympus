@@ -55,6 +55,7 @@ pip-wheel-metadata/
 # Copilot local runtime, authentication, and session state
 .copilot/
 copilot-data/
+.olympus/
 
 # Logs, runtime state, and local databases
 *.log

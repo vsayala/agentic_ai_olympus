@@ -5,6 +5,7 @@ import json
 import math
 import re
 from collections import Counter
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
@@ -13,6 +14,8 @@ from bs4 import BeautifulSoup
 from docx import Document
 from openpyxl import load_workbook
 from pypdf import PdfReader
+
+from olympus_copilot_sdk.knowledge_01.retrieval import IndexSummary, SearchResult
 
 TEXT_SUFFIXES: Final = {
     ".css",
@@ -39,53 +42,22 @@ class Chunk:
     terms: frozenset[str]
 
 
-@dataclass(frozen=True)
-class SearchResult:
-    source: str
-    text: str
-    score: float
-
-
-@dataclass(frozen=True)
-class IndexSummary:
-    indexed_files: tuple[str, ...]
-    skipped_files: tuple[str, ...]
-    chunk_count: int
-
-
 class KnowledgeBase:
     def __init__(self, data_directory: Path) -> None:
         self.data_directory = data_directory.resolve()
         self._chunks: list[Chunk] = []
         indexed: list[str] = []
         skipped: list[str] = []
-
-        if self.data_directory.exists():
-            for path in sorted(self.data_directory.rglob("*")):
-                if not path.is_file() or path.name.startswith("."):
-                    continue
-                relative_path = str(path.relative_to(self.data_directory))
-                try:
-                    text = _extract_text(path)
-                except (OSError, ValueError, TypeError, KeyError):
-                    skipped.append(relative_path)
-                    continue
-                if not text.strip():
-                    skipped.append(relative_path)
-                    continue
-                indexed.append(relative_path)
-                self._chunks.extend(_make_chunks(relative_path, text[:MAX_FILE_CHARACTERS]))
-
+        for source, text in iter_documents(self.data_directory, skipped):
+            indexed.append(source)
+            self._chunks.extend(_make_chunks(source, text[:MAX_FILE_CHARACTERS]))
         self.summary = IndexSummary(tuple(indexed), tuple(skipped), len(self._chunks))
-        self._document_frequency = Counter(
-            term for chunk in self._chunks for term in chunk.terms
-        )
+        self._document_frequency = Counter(term for chunk in self._chunks for term in chunk.terms)
 
     def search(self, query: str, limit: int = 6) -> list[SearchResult]:
         query_terms = _terms(query)
         if not query_terms:
             return []
-
         ranked: list[SearchResult] = []
         query_identifiers = _identifiers(query)
         query_weight = sum(self._idf(term) for term in query_terms)
@@ -93,10 +65,13 @@ class KnowledgeBase:
             overlap = query_terms & chunk.terms
             if not overlap:
                 continue
-            lexical_score = sum(
-                self._idf(term) * (2.0 if term in chunk.source.lower() else 1.0)
-                for term in overlap
-            ) / query_weight
+            lexical_score = (
+                sum(
+                    self._idf(term) * (2.0 if term in chunk.source.lower() else 1.0)
+                    for term in overlap
+                )
+                / query_weight
+            )
             query_norm = math.sqrt(sum(self._idf(term) ** 2 for term in query_terms))
             chunk_norm = math.sqrt(sum(self._idf(term) ** 2 for term in chunk.terms))
             vector_score = (
@@ -104,8 +79,11 @@ class KnowledgeBase:
                 if query_norm and chunk_norm
                 else 0.0
             )
-            identifier_matches = query_identifiers & _identifiers(chunk.text)
-            score = lexical_score + vector_score + 4.0 * len(identifier_matches)
+            score = (
+                lexical_score
+                + vector_score
+                + 4.0 * len(query_identifiers & _identifiers(chunk.text))
+            )
             if Path(chunk.source).suffix.lower() in {".css", ".js"}:
                 score *= 0.1
             ranked.append(SearchResult(chunk.source, chunk.text, score))
@@ -113,9 +91,30 @@ class KnowledgeBase:
         return ranked[:limit]
 
     def _idf(self, term: str) -> float:
-        return math.log(
-            (len(self._chunks) + 1) / (self._document_frequency.get(term, 0) + 1)
-        ) + 1.0
+        return math.log((len(self._chunks) + 1) / (self._document_frequency.get(term, 0) + 1)) + 1.0
+
+
+def iter_documents(
+    data_directory: Path,
+    skipped: list[str] | None = None,
+) -> Iterator[tuple[str, str]]:
+    if not data_directory.exists():
+        return
+    for path in sorted(data_directory.rglob("*")):
+        if not path.is_file() or path.name.startswith("."):
+            continue
+        source = str(path.relative_to(data_directory))
+        try:
+            text = _extract_text(path)
+        except (OSError, ValueError, TypeError, KeyError):
+            if skipped is not None:
+                skipped.append(source)
+            continue
+        if not text.strip():
+            if skipped is not None:
+                skipped.append(source)
+            continue
+        yield source, text
 
 
 def _extract_text(path: Path) -> str:

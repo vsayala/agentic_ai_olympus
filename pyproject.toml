@@ -14,7 +14,9 @@ dependencies = [
 	"beautifulsoup4>=4.13,<5",
 	"lxml>=5,<7",
 	"openpyxl>=3.1,<4",
-	"pypdf>=5.9,<7",
+	"pypdf>=6.15,<7",
+	"pymilvus[milvus-lite]>=2.6,<3",
+	"fastembed>=0.7,<1",
 	"python-docx>=1.2,<2",
 ]
 
@@ -24,7 +26,7 @@ dev = [
 	"pip-audit>=2.8,<3",
 	"pre-commit>=4.1,<5",
 	"pyright>=1.1.396,<2",
-	"pytest>=8.3,<9",
+	"pytest>=9.0.3,<10",
 	"pytest-asyncio>=0.25,<2",
 	"pytest-cov>=6.0,<8",
 	"ruff>=0.9,<1",
@@ -55,7 +57,7 @@ testpaths = ["tests"]
 
 [tool.bandit]
 recursive = true
-targets = ["src"]
+targets = ["src", "app.py", "run_app.py"]
 
 [tool.coverage.run]
 branch = true
