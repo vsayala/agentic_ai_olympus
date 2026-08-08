@@ -125,3 +125,8 @@ def _metric_panel(name: str, values: ResponseMetrics) -> None:
         f"source coverage {values.source_coverage_ratio:.0%} · "
         f"grounded sentences {values.grounded_sentence_ratio:.0%}"
     )
+    if values.evidence_topic_completeness is not None:
+        st.caption(
+            "Broad evidence-topic citation completeness "
+            f"{values.evidence_topic_completeness:.0%} (reported separately from quality)"
+        )
