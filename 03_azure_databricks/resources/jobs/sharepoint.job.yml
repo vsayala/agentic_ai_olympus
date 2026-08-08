@@ -1,0 +1,43 @@
+resources:
+  jobs:
+    sharepoint_pipeline:
+      name: ${bundle.target}-sharepoint-semantic-pipeline
+      description: Incrementally land SharePoint files, parse documents, and refresh AI Search.
+      max_concurrent_runs: 1
+      queue:
+        enabled: true
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?"
+        timezone_id: UTC
+        pause_status: PAUSED
+      tasks:
+        - task_key: prepare_documents
+          notebook_task:
+            notebook_path: ../../notebooks/run_source_pipeline.py
+            base_parameters:
+              config_path: ${workspace.file_path}/configs/sharepoint.yml
+              connection: ${var.sharepoint_connection}
+              source_url: ${var.sharepoint_source_url}
+              pipeline: sharepoint
+          environment_key: serverless_ai
+          max_retries: 2
+          min_retry_interval_millis: 60000
+        - task_key: provision_and_sync_index
+          depends_on:
+            - task_key: prepare_documents
+          notebook_task:
+            notebook_path: ../../notebooks/provision_ai_assets.py
+            base_parameters:
+              config_path: ${workspace.file_path}/configs/sharepoint.yml
+              search_endpoint: ${resources.vector_search_endpoints.olympus_search.name}
+              mode: ai_search
+          environment_key: serverless_ai
+      environments:
+        - environment_key: serverless_ai
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../../dist/*.whl
+      tags:
+        source: sharepoint
+        layer: semantic

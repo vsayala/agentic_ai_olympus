@@ -1,0 +1,11 @@
+# Move this file to resources/genie.yml only after gold_events and the warehouse exist.
+resources:
+  genie_spaces:
+    meltwater:
+      title: Meltwater intelligence
+      description: Governed natural-language analytics over curated Meltwater gold tables.
+      warehouse_id: ${var.warehouse_id}
+      file_path: ./genie/meltwater.geniespace.json
+      permissions:
+        - level: CAN_RUN
+          service_principal_name: ${var.run_as_service_principal}

@@ -1,0 +1,8 @@
+resources:
+  vector_search_endpoints:
+    olympus_search:
+      name: olympus-${bundle.target}-search
+      endpoint_type: STANDARD
+      permissions:
+        - level: CAN_USE
+          service_principal_name: ${var.run_as_service_principal}

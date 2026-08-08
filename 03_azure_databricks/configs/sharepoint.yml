@@ -1,0 +1,15 @@
+name: sharepoint
+kind: files
+catalog: data
+schema: sharepoint
+raw_volume: raw
+checkpoint_volume: checkpoints
+semantic_table: semantic_chunks
+vector_index: data.sharepoint.semantic_index
+serving_endpoint: sharepoint-hercules
+options:
+  connection: ${SHAREPOINT_CONNECTION}
+  source_url: ${SHAREPOINT_SOURCE_URL}
+  parse_schema_version: "2.0"
+  prep_schema_version: "1.0"
+  sync_mode: TRIGGERED

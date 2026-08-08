@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    meltwater_pipeline:
+      name: ${bundle.target}-meltwater-medallion-pipeline
+      description: Ingest API payloads and build bronze, silver, gold, and optional semantic assets.
+      max_concurrent_runs: 1
+      job_clusters:
+        - job_cluster_key: batch
+          new_cluster: ${var.batch_job_cluster}
+      tasks:
+        - task_key: land_raw_payloads
+          notebook_task:
+            notebook_path: ../../notebooks/ingest_api.py
+            base_parameters:
+              config_path: ${workspace.file_path}/configs/meltwater.yml
+          job_cluster_key: batch
+          libraries:
+            - whl: ../../dist/*.whl
+          max_retries: 2
+          min_retry_interval_millis: 60000
+        - task_key: medallion
+          depends_on:
+            - task_key: land_raw_payloads
+          notebook_task:
+            notebook_path: ../../notebooks/run_source_pipeline.py
+            base_parameters:
+              config_path: ${workspace.file_path}/configs/meltwater.yml
+              pipeline: api
+          job_cluster_key: batch
+          libraries:
+            - whl: ../../dist/*.whl
+          max_retries: 2
+          min_retry_interval_millis: 60000
+      tags:
+        source: meltwater
+        layer: medallion

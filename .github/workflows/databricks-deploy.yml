@@ -1,0 +1,60 @@
+name: Azure Databricks bundle
+
+on:
+  pull_request:
+    paths:
+      - "03_azure_databricks/**"
+      - ".github/workflows/databricks-deploy.yml"
+  push:
+    branches: [main]
+    paths:
+      - "03_azure_databricks/**"
+      - ".github/workflows/databricks-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        required: true
+        default: dev
+        type: choice
+        options: [dev, qe, stg, prod]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 03_azure_databricks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --extra dev --locked
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run pyright
+      - run: uv run pytest
+      - run: uv run bandit -q -c pyproject.toml -r src notebooks tools
+      - run: uv run pip-audit
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target || 'dev' }}
+    concurrency: databricks-${{ inputs.target || 'dev' }}
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+    defaults:
+      run:
+        working-directory: 03_azure_databricks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate --target "${{ inputs.target || 'dev' }}"
+      - run: databricks bundle deploy --target "${{ inputs.target || 'dev' }}"

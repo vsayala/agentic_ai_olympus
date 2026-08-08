@@ -1,0 +1,12 @@
+name: replace_me
+kind: files
+catalog: data
+schema: replace_me
+raw_volume: raw
+checkpoint_volume: checkpoints
+semantic_table: semantic_chunks
+vector_index: data.replace_me.semantic_index
+serving_endpoint: replace-me-hercules
+options:
+  connection: REPLACE_ME
+  source_url: https://REPLACE_ME

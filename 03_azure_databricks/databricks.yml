@@ -1,0 +1,44 @@
+bundle:
+  name: olympus-azure-databricks
+  databricks_cli_version: ">=1.3.0"
+  engine: direct
+
+include:
+  - azure_databricks.yml
+  - resources/*.yml
+  - resources/jobs/*.yml
+
+artifacts:
+  default:
+    type: whl
+    build: uv build
+    path: .
+
+sync:
+  include:
+    - configs/**
+    - notebooks/**
+    - src/**
+
+variables:
+  catalog:
+    description: Unity Catalog catalog owned by the data platform team.
+    default: data
+  run_as_service_principal:
+    description: Application ID used by production jobs.
+    default: 00000000-0000-0000-0000-000000000000
+  sharepoint_connection:
+    description: Existing Unity Catalog SharePoint connection.
+    default: REPLACE_ME_sharepoint_connection
+  sharepoint_source_url:
+    description: SharePoint document-library URL.
+    default: https://REPLACE_ME.sharepoint.com/sites/REPLACE_ME/Shared%20Documents
+  policy_mogul_mcp_url:
+    description: External Policy Mogul MCP server registered in Unity AI Gateway.
+    default: https://REPLACE_ME.example/mcp
+  warehouse_id:
+    description: Serverless SQL warehouse used by Genie.
+    default: REPLACE_ME
+  agent_model_version:
+    description: Promoted Unity Catalog source-agent model version.
+    default: "1"
