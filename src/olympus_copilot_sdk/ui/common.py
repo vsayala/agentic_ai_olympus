@@ -10,6 +10,7 @@ import streamlit as st
 from olympus_copilot_sdk.evaluation.comparison import EvaluationRecord
 from olympus_copilot_sdk.vector_db_02.agents import Usage, list_available_models
 from olympus_copilot_sdk.vector_db_02.milvus import VectorKnowledgeBase
+from olympus_copilot_sdk.vector_db_02.retrieval import IndexSummary
 
 ROOT = Path(__file__).parents[3]
 DATA_DIRECTORY = ROOT / "data"
@@ -25,8 +26,20 @@ def apply_theme() -> None:
         [data-testid="stSidebar"] { background: #162c2a; color: #f7f1df; }
         [data-testid="stSidebar"] * { color: #f7f1df; }
         [data-testid="stSidebar"] [data-baseweb="select"] > div,
-        [data-testid="stSidebar"] [data-testid="stNumberInputContainer"] {
+        [data-testid="stSidebar"] [data-testid="stSelectbox"] [role="group"],
+        [data-testid="stSidebar"] [data-testid="stNumberInputContainer"],
+        [data-testid="stSidebar"] .stButton > button,
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary {
             background-color: #2f6f5e !important; border-color: #7fc6a4 !important;
+            color: #f7f1df !important;
+        }
+        [data-testid="stSidebar"] .stButton > button:hover,
+        [data-testid="stSidebar"] .stButton > button:active,
+        [data-testid="stSidebar"] .stButton > button:focus-visible,
+        [data-testid="stSidebar"] [data-testid="stSelectbox"] [role="group"]:focus-within,
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover,
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary:focus-visible {
+            background-color: #245648 !important; border-color: #a6dfbe !important;
         }
         .olympus-title { color: #bd4b31; font-family: Georgia, serif; font-size: 2.2rem;
             font-weight: 700; }
@@ -65,3 +78,9 @@ def vector_usage(records: list[EvaluationRecord]) -> Usage:
         usage.model = current.model or usage.model
         usage.has_sdk_cost = usage.has_sdk_cost or current.has_sdk_cost
     return usage
+
+
+def data_folder_inventory(summary: IndexSummary) -> tuple[str, ...]:
+    readable = ((source, "Read") for source in summary.indexed_files)
+    unsupported = ((source, "Unsupported") for source in summary.skipped_files)
+    return tuple(f"{status}: {source}" for source, status in sorted((*readable, *unsupported)))

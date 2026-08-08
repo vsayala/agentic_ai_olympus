@@ -11,6 +11,7 @@ from olympus_copilot_sdk.ui.common import (
     DEFAULT_MODEL,
     apply_theme,
     available_model_options,
+    data_folder_inventory,
     evaluation_records,
     vector_index,
     vector_usage,
@@ -84,6 +85,7 @@ def render_chat_page() -> None:
 
 def _sidebar(records: list[EvaluationRecord]) -> tuple[str, float, float]:
     usage = vector_usage(records)
+    summary = vector_index().summary
     with st.sidebar:
         st.subheader("Vector chatbot")
         try:
@@ -109,5 +111,15 @@ def _sidebar(records: list[EvaluationRecord]) -> tuple[str, float, float]:
         if st.button("Clear chat", use_container_width=True):
             records.clear()
             st.rerun()
-        st.caption(f"02_Vector_DB: {vector_index().summary.chunk_count} semantic chunks")
+        st.caption(f"Milvus_Vector_Database : {summary.chunk_count:,} Schematic Chunks")
+        with st.expander(
+            f"Data Folder ({len(summary.indexed_files)} read, "
+            f"{len(summary.skipped_files)} unsupported)"
+        ):
+            inventory = data_folder_inventory(summary)
+            if inventory:
+                for item in inventory:
+                    st.text(item)
+            else:
+                st.caption("No files found.")
     return model, input_price, output_price

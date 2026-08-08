@@ -55,10 +55,12 @@ def extract_text(path: Path) -> str:
             element.decompose()
         return soup.get_text(" ", strip=True)
     if suffix == ".pdf":
-        return "\n\n".join(
-            f"Page {page_number}\n{page.extract_text() or ''}"
-            for page_number, page in enumerate(PdfReader(path).pages, start=1)
-        )
+        pages: list[str] = []
+        for page_number, page in enumerate(PdfReader(path).pages, start=1):
+            text = page.extract_text() or ""
+            if text.strip():
+                pages.append(f"Page {page_number}\n{text}")
+        return "\n\n".join(pages)
     if suffix == ".docx":
         document = Document(str(path))
         paragraphs = [paragraph.text for paragraph in document.paragraphs]

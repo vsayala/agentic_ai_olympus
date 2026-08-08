@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from docx import Document
+from pypdf import PdfWriter
 
 from olympus_copilot_sdk.knowledge_01.lexical import KnowledgeBase
 
@@ -26,6 +27,18 @@ def test_skips_unsupported_files(tmp_path: Path) -> None:
 
     assert knowledge.summary.skipped_files == ("cover.jpg",)
     assert knowledge.search("anything") == []
+
+
+def test_skips_pdf_without_extractable_text(tmp_path: Path) -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    with (tmp_path / "scan.pdf").open("wb") as stream:
+        writer.write(stream)
+
+    knowledge = KnowledgeBase(tmp_path)
+
+    assert knowledge.summary.indexed_files == ()
+    assert knowledge.summary.skipped_files == ("scan.pdf",)
 
 
 def test_matches_plural_query_to_singular_document_term(tmp_path: Path) -> None:

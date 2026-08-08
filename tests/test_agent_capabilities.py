@@ -14,12 +14,14 @@ from copilot.session_events import AssistantUsageData, SessionEvent, SessionEven
 from olympus_copilot_sdk.knowledge_01.retrieval import SearchResult as KnowledgeResult
 from olympus_copilot_sdk.knowledge_01.skills import AgentSkills as KnowledgeSkills
 from olympus_copilot_sdk.knowledge_01.skills import EvidenceRequest as KnowledgeEvidenceRequest
+from olympus_copilot_sdk.ui.common import data_folder_inventory
 from olympus_copilot_sdk.vector_db_02 import agents as vector_agents
 from olympus_copilot_sdk.vector_db_02.agents import VectorOrchestrator
 from olympus_copilot_sdk.vector_db_02.prompts import (
     render_evidence_request,
     render_synthesis_request,
 )
+from olympus_copilot_sdk.vector_db_02.retrieval import IndexSummary
 from olympus_copilot_sdk.vector_db_02.retrieval import SearchResult as VectorResult
 from olympus_copilot_sdk.vector_db_02.skills import AgentSkills as VectorSkills
 from olympus_copilot_sdk.vector_db_02.skills import EvidenceRequest as VectorEvidenceRequest
@@ -127,6 +129,20 @@ def test_numbered_stacks_are_isolated_and_ui_routing_is_explicit() -> None:
     assert "KnowledgeOrchestrator" not in chat_source
     assert "Run 01_Knowledge baseline" in evaluation_source
     assert "KnowledgeOrchestrator" in evaluation_source
+
+
+def test_data_folder_inventory_labels_readable_and_unsupported_files() -> None:
+    summary = IndexSummary(
+        indexed_files=("policies/conduct.pdf", "notes.md"),
+        skipped_files=("images/cover.jpg",),
+        chunk_count=42,
+    )
+
+    assert data_folder_inventory(summary) == (
+        "Unsupported: images/cover.jpg",
+        "Read: notes.md",
+        "Read: policies/conduct.pdf",
+    )
 
 
 @pytest.mark.asyncio

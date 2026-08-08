@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from pypdf import PdfWriter
 
 from olympus_copilot_sdk.vector_db_02 import milvus
 from olympus_copilot_sdk.vector_db_02.chunking import (
@@ -16,6 +17,7 @@ from olympus_copilot_sdk.vector_db_02.chunking import (
     VectorChunk,
     make_vector_chunks,
 )
+from olympus_copilot_sdk.vector_db_02.documents import iter_documents
 from olympus_copilot_sdk.vector_db_02.milvus import MilvusLiteClient, VectorKnowledgeBase
 from olympus_copilot_sdk.vector_db_02.retrieval import (
     POLICY_TOPIC_PATTERNS,
@@ -98,6 +100,19 @@ class ReleasableMilvusClient:
 
     def close(self) -> None:
         return None
+
+
+def test_skips_pdf_without_extractable_text(tmp_path: Path) -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    with (tmp_path / "scan.pdf").open("wb") as stream:
+        writer.write(stream)
+    skipped: list[str] = []
+
+    documents = list(iter_documents(tmp_path, skipped))
+
+    assert documents == []
+    assert skipped == ["scan.pdf"]
 
 
 class BlockingMilvusClient(ReleasableMilvusClient):
