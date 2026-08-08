@@ -55,6 +55,6 @@ jobs:
         working-directory: 03_azure_databricks
     steps:
       - uses: actions/checkout@v4
-      - uses: databricks/setup-cli@main
+      - uses: databricks/setup-cli@60b64e3937ee15f5a8b914664d1e78a586a9a4da # v1.11.0
       - run: databricks bundle validate --target "${{ inputs.target || 'dev' }}"
       - run: databricks bundle deploy --target "${{ inputs.target || 'dev' }}"

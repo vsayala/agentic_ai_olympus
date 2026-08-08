@@ -33,9 +33,21 @@ variables:
   sharepoint_source_url:
     description: SharePoint document-library URL.
     default: https://REPLACE_ME.sharepoint.com/sites/REPLACE_ME/Shared%20Documents
+  sharepoint_serving_endpoint:
+    description: Existing SharePoint source-agent serving endpoint validated after index sync.
+    default: REPLACE_ME-sharepoint-hercules
   policy_mogul_mcp_url:
     description: External Policy Mogul MCP server registered in Unity AI Gateway.
     default: https://REPLACE_ME.example/mcp
+  policy_mogul_connection:
+    description: Existing governed Unity Catalog connection for Policy Mogul MCP.
+    default: REPLACE_ME_policy_mogul_connection
+  policy_mogul_serving_endpoint:
+    description: Existing Policy Mogul source-agent serving endpoint.
+    default: REPLACE_ME-policy-mogul-hercules
+  meltwater_genie_space_id:
+    description: Deployed Meltwater Genie space ID validated by the ingestion job.
+    default: REPLACE_ME-genie-space-id
   warehouse_id:
     description: Serverless SQL warehouse used by Genie.
     default: REPLACE_ME

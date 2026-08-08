@@ -4,17 +4,27 @@ resources:
       name: ${bundle.target}-policy-mogul-mcp-validation
       description: Validate the governed MCP connection without materializing source data.
       max_concurrent_runs: 1
+      timeout_seconds: 1800
       schedule:
         quartz_cron_expression: "0 0 6 * * ?"
         timezone_id: UTC
         pause_status: PAUSED
       tasks:
-        - task_key: validate_mcp
+        - task_key: validate_connection
           notebook_task:
-            notebook_path: ../../notebooks/validate_mcp.py
+            notebook_path: ../../notebooks/03_policy_mogul/01_validate_connection.py
             base_parameters:
               config_path: ${workspace.file_path}/configs/policy_mogul.yml
               mcp_url: ${var.policy_mogul_mcp_url}
+              connection: ${var.policy_mogul_connection}
+          environment_key: serverless
+        - task_key: validate_serving
+          depends_on:
+            - task_key: validate_connection
+          notebook_task:
+            notebook_path: ../../notebooks/03_policy_mogul/02_validate_serving.py
+            base_parameters:
+              serving_endpoint: ${var.policy_mogul_serving_endpoint}
           environment_key: serverless
       environments:
         - environment_key: serverless

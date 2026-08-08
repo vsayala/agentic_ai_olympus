@@ -15,12 +15,52 @@
 
 ## Ownership
 
-`knowledge_01/` is the complete original lexical baseline. It owns its agents, prompts, skills,
-tools, extraction, chunking, retrieval contracts, and TF-IDF ranking.
+The project uses four architecture stewards:
 
-`vector_db_02/` is the complete production vector application. It owns its agents, prompts,
-skills, tools, extraction, semantic chunking, FastEmbed integration, retrieval contracts, and
-Milvus Lite persistence. Child chunks remain at most 800 characters and retain PDF page metadata;
+- **Loki** owns data and retrieval engineering: `knowledge_01` lexical retrieval,
+   `vector_db_02` document/index/Milvus retrieval, `03_azure_databricks`, and future data sources,
+   databases, indexes, retrieval engines, and data platforms.
+- **Thor** owns application agents: Zeus, Hercules, future agents, orchestration, prompts, skills,
+   tools, model sessions, grounding, and agent-facing evidence contracts.
+- **Hela** owns frontend experience: Streamlit navigation, pages, session state, interaction,
+   accessibility, responsive behavior, and user-visible failures.
+- **Odin** owns project-wide architecture and final integration. Odin does not replace specialist
+   review; it consumes every applicable specialist report and preserves its conditions.
+
+Ownership follows behavior rather than only folders. A retrieval adapter consumed by Hercules
+requires Loki for provenance and Thor for the agent contract. A UI that changes agent or retrieval
+semantics requires Hela plus the affected specialist. `run_app.py` lifecycle changes require Odin
+and Hela, plus Thor or Loki when model or database lifecycle changes.
+
+## Workflow Skills
+
+Use a skill for a repeatable implementation or readiness procedure; use the owning agent directly
+for investigation, review, debugging, or a one-off change. Skills do not replace specialist or Odin
+sign-off.
+
+| Skill | Use it for | Primary steward |
+|---|---|---|
+| `add-databricks-source` | File, API, structured, Genie, AI Search, or MCP source onboarding | Loki |
+| `evolve-local-retrieval` | Local chunking, embeddings, ranking, Milvus, or citation provenance | Loki |
+| `add-document-format` | A new parser or locally indexed file format | Loki |
+| `add-evaluation-metric` | Deterministic metric, snapshot, comparison, or score changes | Loki + Hela |
+| `add-olympus-agent` | A new application agent or agent capability under Thor | Thor |
+| `add-ui-workflow` | A Streamlit page, interaction, navigation, or session-state workflow | Hela |
+| `verify-ui-readiness` | Pre-merge UI, accessibility, rerun, and launcher verification | Hela |
+
+Do not use `add-olympus-agent` to create `.github` steward agents. Use the VS Code agent
+customization workflow for those. Do not use a generic retrieval-backend scaffold: local lexical,
+Milvus, and Databricks implementations have different persistence, governance, and validation
+requirements.
+
+`knowledge_01/` contains the complete original lexical baseline implementation: agents, prompts,
+skills, tools, extraction, chunking, retrieval contracts, and TF-IDF ranking. Code remains local to
+the package; Thor reviews agent semantics while Loki reviews data and retrieval semantics.
+
+`vector_db_02/` contains the complete production vector implementation: agents, prompts, skills,
+tools, extraction, semantic chunking, FastEmbed integration, retrieval contracts, and Milvus Lite
+persistence. Code remains local to the package; Thor reviews agent semantics while Loki reviews
+data and retrieval semantics. Child chunks remain at most 800 characters and retain PDF page metadata;
 adjacent children form bounded parent sections of at most 2,400 characters. Retrieval classifies
 queries deterministically. Targeted mode performs dense and package-local lexical rank fusion,
 deduplication, and source-aware diversity over children. Broad mode aggregates relevance to choose
@@ -41,7 +81,11 @@ navigation and stack-neutral evaluation snapshots and metrics.
 4. Preserve prompt, model, result-limit, and pricing parity when comparison fairness requires it.
 5. Add a focused test for the owning package before changing adjacent layers.
 6. Run strict Pyright, pytest, Ruff, Bandit, pip-audit, and package build.
-7. Run Odin after project-wide integration changes.
+7. Obtain the applicable specialist reports: Loki for data/retrieval, Thor for agents, and Hela
+   for UI. Cross-domain releases require all three.
+8. Give those reports to Odin for the only final project-wide sign-off. Odin cannot upgrade a
+   conditional or blocked specialist status to an unconditional pass. Status precedence is
+   `BLOCKED` over `CONDITIONAL PASS` over `PASS`; a missing required report is blocked.
 
 ## Evaluation Interpretation
 

@@ -49,6 +49,8 @@ This two-phase deployment prevents first-deploy references to nonexistent tables
   additionally requires a workspace/runtime that supports DBR 18.2 behavior.
 - Non-AI transforms use a reusable standard-access Photon job cluster.
 - Jobs are paused by default where upstream beta/MCP dependencies require workspace approval.
+- Source jobs are explicit notebook DAGs. Ingestion ends with validation of an already promoted
+  retrieval or serving asset; model deployment remains a separate release lifecycle.
 
 ## Governance
 

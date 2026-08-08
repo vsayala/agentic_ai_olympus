@@ -8,6 +8,6 @@ semantic_table: semantic_chunks
 serving_endpoint: policy-mogul-hercules
 options:
   mcp_url: ${POLICY_MOGUL_MCP_URL}
-  connection: REPLACE_ME_policy_mogul_connection
+  connection: ${POLICY_MOGUL_CONNECTION}
   materialization: none
   governance: unity_ai_gateway

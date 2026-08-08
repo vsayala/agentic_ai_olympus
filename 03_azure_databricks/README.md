@@ -16,6 +16,21 @@ sources. It is isolated from the local lexical and Milvus stacks.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/ADD_SOURCE.md](docs/ADD_SOURCE.md).
 
+## Databricks Repo layout
+
+Clone the whole repository into Azure Databricks. Databricks-specific implementation changes stay
+under `03_azure_databricks` (apart from repository-level CI and agent governance). Each numbered
+folder under `notebooks/` is one source and its files are the ordered tasks in that source's job:
+
+- `01_sharepoint`: connection, landing, parsing, chunking, AI Search sync, serving readiness.
+- `02_meltwater`: raw API landing, bronze, silver, gold, UC function, Genie readiness.
+- `03_policy_mogul`: governed MCP connection and serving readiness, with no default data copy.
+
+These `.py` files are native Databricks source-format notebooks because they begin with
+`# Databricks notebook source`; they run as notebooks and do not need conversion to `.ipynb`.
+They remain thin adapters. Testable source logic lives under `src/olympus_databricks/sources`, and
+cross-source code lives under `src/olympus_databricks/utilities`.
+
 ## Local setup
 
 ```bash
@@ -30,8 +45,10 @@ uv run pip-audit
 uv build
 ```
 
-Copy `.env.example` to `.env` only for local CLI use. Do not commit it. The nested `.venv` and
-`uv.lock` keep this project independent from the root application.
+Copy `.env.example` to `.env` only for local CLI use. Do not commit it. The nested `.venv` is for
+local development only and is not copied to Databricks compute. Each job installs the built wheel
+from `dist`; a platform team can instead provide that wheel through an approved cluster policy or
+managed library. `uv.lock` keeps local and CI dependency resolution reproducible.
 
 ## Cloud prerequisites
 

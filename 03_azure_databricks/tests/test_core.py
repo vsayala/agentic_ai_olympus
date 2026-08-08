@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Self
 
 import pytest
 
@@ -15,9 +17,21 @@ from olympus_databricks.config import ConfigurationError, SourceConfig, load_sou
 from olympus_databricks.contracts import Evidence
 from olympus_databricks.hercules import HerculesDatabricksTool
 from olympus_databricks.logging import job_run
-from olympus_databricks.pipelines import api_medallion_plan, execute_plan, sharepoint_plan
 from olympus_databricks.retrieval import AISearchRetriever
+from olympus_databricks.sources.meltwater import (
+    DeltaRawWriter,
+    bronze_step,
+    gold_step,
+    lookup_function_step,
+    silver_step,
+)
+from olympus_databricks.sources.sharepoint import (
+    chunk_documents_step,
+    land_files_step,
+    parse_documents_step,
+)
 from olympus_databricks.strategy import RetrievalStrategy, retrieval_strategy
+from olympus_databricks.utilities.sql import execute_plan
 
 
 class FakeSpark:
@@ -72,6 +86,36 @@ class FakeRawWriter:
         self.ids.extend(str(record["id"]) for record in records)  # type: ignore[index, union-attr]
 
 
+class FakeFrameWriter:
+    def __init__(self) -> None:
+        self.save_mode = ""
+        self.table = ""
+
+    def mode(self, save_mode: str) -> Self:
+        self.save_mode = save_mode
+        return self
+
+    def saveAsTable(self, table: str) -> None:
+        self.table = table
+
+
+class FakeFrame:
+    def __init__(self) -> None:
+        self.write = FakeFrameWriter()
+
+
+class FakeFrameSpark:
+    def __init__(self) -> None:
+        self.rows: object = None
+        self.schema = ""
+        self.frame = FakeFrame()
+
+    def createDataFrame(self, data: object, schema: str) -> FakeFrame:
+        self.rows = data
+        self.schema = schema
+        return self.frame
+
+
 def _config(kind: str = "files") -> SourceConfig:
     return SourceConfig(
         "sharepoint",
@@ -101,7 +145,12 @@ def test_config_resolves_environment_and_rejects_unsafe_identifiers(tmp_path: Pa
 
 
 def test_sharepoint_plan_uses_versioned_ai_functions_and_change_feed() -> None:
-    steps = sharepoint_plan(_config())
+    config = _config()
+    steps = [
+        land_files_step(config),
+        parse_documents_step(config),
+        chunk_documents_step(config),
+    ]
     sql = "\n".join(step.statement for step in steps)
     assert [step.name for step in steps] == [
         "land_raw_files",
@@ -115,11 +164,22 @@ def test_sharepoint_plan_uses_versioned_ai_functions_and_change_feed() -> None:
 
 def test_api_plan_executes_bronze_silver_gold_in_order() -> None:
     spark = FakeSpark()
-    execute_plan(spark, api_medallion_plan(_config("api")))
+    config = _config("api")
+    execute_plan(
+        spark,
+        (
+            bronze_step(config),
+            silver_step(config),
+            gold_step(config),
+            lookup_function_step(config),
+        ),
+    )
     assert len(spark.statements) == 4
     assert "bronze_events" in spark.statements[0]
     assert "silver_events" in spark.statements[1]
     assert "gold_events" in spark.statements[2]
+    assert "row_number()" in spark.statements[2]
+    assert "any_value" not in spark.statements[2]
     assert "lookup_event" in spark.statements[3]
 
 
@@ -160,6 +220,29 @@ def test_api_ingestion_retries_and_writes_each_page() -> None:
     assert count == 2
     assert writer.ids == ["1", "2"]
     assert waits == [1.0]
+
+
+def test_delta_raw_writer_canonicalizes_and_appends_records() -> None:
+    spark = FakeFrameSpark()
+    ingested_at = datetime(2026, 8, 8, tzinfo=UTC)
+    writer = DeltaRawWriter(
+        spark,
+        "data.meltwater.raw_payloads",
+        "id",
+        "https://api.example.test",
+        clock=lambda: ingested_at,
+    )
+
+    writer.append([{"name": "Report", "id": 7}])
+
+    assert spark.rows == [
+        ("7", ingested_at, '{"id":7,"name":"Report"}', "https://api.example.test")
+    ]
+    assert spark.schema == (
+        "event_id STRING, ingested_at TIMESTAMP, payload_json STRING, source_uri STRING"
+    )
+    assert spark.frame.write.save_mode == "append"
+    assert spark.frame.write.table == "data.meltwater.raw_payloads"
 
 
 def test_api_ingestion_rejects_repeated_cursor() -> None:
