@@ -1,0 +1,101 @@
+# macOS and operating-system metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+
+# Python bytecode and interpreter caches
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test, coverage, lint, and type-check caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.dmypy.json
+dmypy.json
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytestdebug.log
+
+# Python build and packaging output
+build/
+dist/
+site/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Streamlit local configuration and secrets
+.streamlit/secrets.toml
+
+# Copilot local runtime, authentication, and session state
+.copilot/
+copilot-data/
+
+# Logs, runtime state, and local databases
+*.log
+*.pid
+*.pid.lock
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary files and editor backups
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+.cache/
+tmp/
+temp/
+
+# IDE and editor-specific local state
+.idea/
+.vscode/
+.history/
+
+# Node dependencies if local CLI tooling is added
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Jupyter local state
+.ipynb_checkpoints/
+
+# Generated documentation output
+site/
+docs/_build/
+
+# Keep the project corpus and reproducible dependency files tracked.
+!data/
+!data/**
+!uv.lock
+!pyproject.toml

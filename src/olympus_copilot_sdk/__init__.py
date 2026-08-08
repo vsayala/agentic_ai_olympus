@@ -1,0 +1,1 @@
+"""Olympus Copilot SDK application."""
