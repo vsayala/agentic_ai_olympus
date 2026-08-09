@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import threading
 from pathlib import Path
 from typing import Protocol, cast
@@ -28,6 +29,7 @@ from olympus_copilot_sdk.vector_db_02.retrieval import (
     candidate_limit,
     classify_query,
     hybrid_rank,
+    is_financial_results_query,
 )
 
 COLLECTION_NAME = "olympus_chunks"
@@ -77,7 +79,11 @@ class VectorKnowledgeBase:
     ) -> None:
         self.data_directory = data_directory.resolve()
         runtime_directory = self.data_directory.parent / ".olympus"
-        self.database_path = database_path or runtime_directory / "milvus_lite.db"
+        corpus_name = re.sub(r"[^a-zA-Z0-9_.-]+", "-", self.data_directory.name)
+        default_database_name = (
+            "milvus_lite.db" if corpus_name == "data" else f"{corpus_name}.milvus_lite.db"
+        )
+        self.database_path = database_path or runtime_directory / default_database_name
         self._metadata_path = self.database_path.with_suffix(".metadata.json")
         self._embedding = embedding or FastEmbedProvider(runtime_directory / "models")
         self._client: MilvusLiteClient | None = None
@@ -95,7 +101,8 @@ class VectorKnowledgeBase:
         if not query.strip() or not self._chunks or limit <= 0:
             return []
         mode = classify_query(query)
-        result_limit = BROAD_RESULT_LIMIT if mode == "broad" else limit
+        financial_results = is_financial_results_query(query)
+        result_limit = BROAD_RESULT_LIMIT if mode == "broad" or financial_results else limit
         with self._lock:
             client = self._ensure_index()
             query_vector = self._embedding.embed([query])[0]
@@ -115,8 +122,14 @@ class VectorKnowledgeBase:
             )
             for hit in hits[0]
         ]
-        if mode == "broad":
-            return broad_rank(query, self._chunks, dense_results, result_limit)
+        if mode == "broad" or financial_results:
+            return broad_rank(
+                query,
+                self._chunks,
+                dense_results,
+                result_limit,
+                cover_policy_topics=not financial_results,
+            )
         return hybrid_rank(query, self._chunks, dense_results, result_limit)
 
     def _search_client(

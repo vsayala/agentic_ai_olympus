@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -28,7 +29,7 @@ class VectorRetrievalTool:
     index: VectorKnowledgeBase
 
     async def execute(self, query: str, limit: int = 6) -> tuple[SearchResult, ...]:
-        return tuple(self.index.search(query, limit))
+        return tuple(await asyncio.to_thread(self.index.search, query, limit))
 
 
 @dataclass(frozen=True)

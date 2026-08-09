@@ -1,25 +1,27 @@
 # Olympus Copilot SDK
 
-Olympus is a local, retrieval-grounded multi-agent chat application built with the GitHub Copilot SDK and Streamlit. A user talks to **Zeus**, the orchestration agent. Zeus delegates evidence gathering to **Hercules**, which searches files under `data/`, answers from retrieved excerpts, and returns cited findings for Zeus to synthesize.
+Olympus is a local, retrieval-grounded multi-agent chat application built with the GitHub Copilot SDK and Streamlit. A user talks to **Zeus**, the orchestration agent. Deterministic evidence relevance routes each request to **Hercules** for `data/`, **Hades** for `data_2/`, or both; Zeus synthesizes only their cited findings.
 
 The application uses the same GitHub Copilot model for both agents and reports model calls, input tokens, output tokens, and session cost in the UI.
 
 ## Features
 
-- Two Copilot agents with separate roles and system prompts
+- Three Copilot agents with separate roles and system prompts
 - GitHub Copilot CLI authentication and model inference
-- Milvus Lite vector retrieval from files in `data/` for production chat
+- Independently persisted Milvus Lite indexes for `data/` and `data_2/`
 - Local FastEmbed embeddings using `BAAI/bge-small-en-v1.5`
 - On-demand lexical baseline evaluation using stored vector-chat prompts
 - Response, source, token, latency, cost, and grounding-proxy comparison
 - Support for HTML, PDF, DOCX, XLSX, CSV, JSON, Markdown, source code, and other text formats
 - Stable excerpt citations (`[S1]`, `[S2]`, ...) mapped to source paths and unique locations
-- Visible Zeus-to-Hercules execution stages
+- Visible Zeus-to-specialist execution stages
 - Session-level token and cost tracking from Copilot SDK usage events
 - Configurable model and fallback token pricing
 - Semantic chunk count in the Chatbot sidebar
 - Prompt-injection safeguards for retrieved source text
 - Strict Pyright, Ruff, pytest, and coverage configuration
+- Typed Loki, Thor, and Hela review receipts with deterministic Odin precedence validation
+- Root CI across Python 3.11-3.13 plus CodeQL, dependency review, Dependabot, and CODEOWNERS
 
 ## Copilot Context Efficiency
 
@@ -33,15 +35,26 @@ corpus, and lockfiles on Copilot surfaces that support it. It is not a security 
 mode does not currently enforce GitHub content exclusion; managed exclusions belong in repository,
 organization, or enterprise Copilot settings as documented in the workflow.
 
+Project-wide deputy governance is defined in [the governance contract](docs/GOVERNANCE.md). Odin is
+the only coordinator; Loki, Thor, and Hela return immutable evidence-backed receipts that are
+rejected when missing, stale, malformed, or tied to changed artifacts. Agents may propose standards
+updates, but humans retain approval authority for consequential governance and deployment changes.
+Release versioning, SBOM, provenance, and rollback procedures are defined in
+[the release guide](docs/RELEASE.md).
+
 ## Architecture
 
 ```mermaid
 flowchart LR
     U[User] --> UI[Streamlit UI]
    UI --> VZ[02 Vector Zeus]
-   VZ --> V[Milvus Lite]
+   VZ --> RTE[Evidence relevance router]
+   RTE --> V[Hercules Milvus index]
+   RTE --> H[Hades Milvus index]
    V --> VH[02 Vector Hercules]
+   H --> HD[02 Vector Hades]
    VH --> VZ
+   HD --> VZ
    VZ --> UI
    UI --> R[Pending evaluation record]
    R -->|User requests baseline| KZ[01 Knowledge Zeus]
@@ -101,15 +114,17 @@ import-safe names `knowledge_01` and `vector_db_02`. Their UI labels remain exac
 - Its own extraction, retrieval contracts, prompts, skills, tools, and agent orchestration
 
 Generated databases, metadata, and downloaded embedding models live under `.olympus/` and are not
-committed. The first vector query downloads the embedding model and can take longer; subsequent
-queries reuse both the model cache and Milvus collection.
+committed. Every corpus uses the same extraction, chunking, embedding, and ranking pipeline but a
+distinct Milvus database file. The first vector query can take longer; subsequent queries reuse the
+model cache and each corpus collection.
 
 The embedding model remains `BAAI/bge-small-en-v1.5`. Improving candidate generation and ranking
 avoids the download, memory, and first-query latency regression of switching to a larger model.
 
 ### Evaluation
 
-Every Chatbot query runs only the two-call `02_Vector_DB` Zeus/Hercules workflow. It stores the
+Every Chatbot query runs only `02_Vector_DB`. A single-specialist request uses two model calls;
+requests needing both corpora use three. The workflow stores the
 prompt, model, vector response, usage, latency, and metrics as a pending evaluation record. No
 `01_Knowledge` model calls or tokens are spent during normal chat.
 
@@ -176,7 +191,7 @@ sequenceDiagram
 1. **User to Zeus**
    - Streamlit receives the prompt.
    - The original prompt goes directly to deterministic hybrid retrieval.
-   - The UI displays the Zeus and Hercules workflow stages.
+   - The UI displays Zeus and the selected specialist workflow stages.
 
 2. **Production retrieval**
     - Deterministic cue detection classifies requests as targeted or broad; narrow process questions
@@ -187,15 +202,19 @@ sequenceDiagram
        20,000-character evidence budget across represented topic families.
     - Evaluation maps each citation ID to its underlying source; display legends add page, section,
        or stable chunk location.
+    - Both corpus indexes are searched in parallel. Deterministic query-to-evidence overlap routes
+       the request to Hercules, Hades, or both without requiring a corpus name in the prompt.
+    - If no corpus passes the relevance gate, the application returns an insufficient-information
+       response without spending model tokens.
 
-3. **Hercules research**
-   - Hercules receives the user request and retrieved excerpts.
+3. **Specialist research**
+   - Hercules or Hades receives the user request and only its selected excerpts.
    - Retrieved excerpts are explicitly treated as untrusted data, not instructions.
    - Hercules answers only from those excerpts and cites substantive claims as `[S1]`.
    - The UI displays `Hercules is searching the hybrid index` and `Hercules returned evidence`.
 
 4. **Zeus synthesis**
-   - Zeus reviews Hercules's cited report.
+   - Zeus reviews the selected specialists' cited reports.
     - Targeted responses remain capped at 300 words. Broad summaries may use up to 900 words, while
        the broad Hercules report is capped at 1,100 words.
     - Broad prompts cover every retrieved topic family with evidence and prohibit absent inventions.
@@ -216,7 +235,7 @@ sequenceDiagram
 ```text
 .
 ├── app.py                              # Streamlit chat UI and session state
-├── run_app.py                          # Starts Copilot CLI server and Streamlit
+├── run_app.py                          # Thin supported launcher entry point
 ├── data/                               # Files used as Hercules's knowledge base
 ├── pyproject.toml                      # Dependencies and tool configuration
 ├── uv.lock                             # Reproducible dependency lockfile
@@ -226,11 +245,15 @@ sequenceDiagram
 │       ├── knowledge_01/               # Complete lexical baseline agent stack
 │       ├── vector_db_02/               # Complete Milvus Lite production agent stack
 │       ├── evaluation/                 # Vector-first records and deterministic metrics
+│       ├── governance/                 # Typed deputy review receipts and validation
+│       ├── launcher.py                 # Copilot CLI lifecycle and sanitized diagnostics
 │       └── ui/                         # Modular Chatbot and Evaluation pages
 └── tests/
    ├── test_agent_capabilities.py       # Skill, tool, and orchestration contract tests
    ├── test_evaluation.py               # Metric and winner-selection tests
+   ├── test_governance.py               # Deputy receipt and topology tests
    ├── test_knowledge.py                # Retrieval and unsupported-file tests
+   ├── test_run_app.py                  # Launcher startup and cleanup state tests
    └── test_vector_db.py                # Chunking and real Milvus Lite persistence tests
 ```
 
@@ -297,7 +320,7 @@ Open:
 http://localhost:8501
 ```
 
-`run_app.py` performs the following work:
+`run_app.py` delegates to package-owned launcher code that performs the following work:
 
 1. Finds the standalone `copilot` executable.
 2. Selects an unused loopback port.
@@ -306,6 +329,9 @@ http://localhost:8501
 5. Passes the local server address and connection token to the application.
 6. Starts Streamlit on port `8501`.
 7. Terminates the Copilot server when Streamlit exits.
+
+Early CLI failures retain only bounded, redacted diagnostics. Cleanup first terminates the child and
+then uses a tested kill fallback if the process does not exit within the timeout.
 
 This lifecycle is important. Starting the CLI before Streamlit avoids child-process pipe failures observed when the Streamlit script runner tries to spawn the CLI itself.
 
@@ -375,7 +401,8 @@ Zeus is the user-facing orchestrator. It:
 - Interprets the request
 - Sends vector requests directly to deterministic retrieval; the baseline retains its brief step
 - Delegates research to Hercules
-- Reviews Hercules's report
+- Routes by retrieved evidence and delegates to Hercules, Hades, or both
+- Reviews selected specialist reports
 - Produces the final response
 - Preserves source citations
 - Avoids unnecessary clarification when filenames and excerpts make intent clear
@@ -392,6 +419,12 @@ Hercules is the retrieval-grounded research agent. It:
 - Cites substantive claims
 - Reports missing evidence instead of filling gaps from unsupported knowledge
 
+### Hades
+
+Hades applies the same bounded research contract to the independently chunked, embedded, and
+persisted `data_2/` corpus. Users do not need to mention Hades or `data_2`; Zeus routes requests from
+retrieved relevance.
+
 ## User Interface
 
 The Chatbot page contains vector chat history and the current process display. During a request,
@@ -399,8 +432,8 @@ it shows:
 
 1. `Zeus is thinking`
 2. `Zeus is delegating`
-3. `Hercules is searching the hybrid index`
-4. `Hercules returned evidence`
+3. The selected specialist searches its hybrid index
+4. The selected specialist returns evidence
 5. `Zeus is synthesizing`
 
 After completion, the final response includes:
@@ -566,9 +599,9 @@ image-only PDFs require OCR, which is not currently implemented.
 - PDF extraction does not perform OCR.
 - Images are skipped.
 - XLS legacy files (`.xls`) are unsupported.
-- Only the selected hybrid-ranked excerpts are sent to Hercules; there is no iterative retrieval
+- Only selected hybrid-ranked excerpts are sent to Hercules or Hades; there is no iterative retrieval
    loop.
-- Each Chatbot turn uses two vector model calls; each requested baseline adds three lexical calls.
+- Single-specialist Chatbot turns use two vector model calls; dual-specialist turns use three.
 - Conversation history is displayed but is not currently injected into new agent prompts.
 - Cost reporting depends on SDK billing metadata or manually configured fallback rates.
 - Evaluation records are Streamlit session state, not a durable evaluation store.

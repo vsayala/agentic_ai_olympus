@@ -14,6 +14,7 @@ from olympus_copilot_sdk.vector_db_02.retrieval import IndexSummary
 
 ROOT = Path(__file__).parents[3]
 DATA_DIRECTORY = ROOT / "data"
+SECONDARY_DATA_DIRECTORY = ROOT / "data_2"
 DEFAULT_MODEL = os.getenv("COPILOT_MODEL", "gpt-5-mini")
 RECORDS_KEY = "evaluation_records"
 
@@ -60,6 +61,13 @@ def evaluation_records() -> list[EvaluationRecord]:
 @st.cache_resource(show_spinner=False)
 def vector_index() -> VectorKnowledgeBase:
     return VectorKnowledgeBase(DATA_DIRECTORY)
+
+
+@st.cache_resource(show_spinner=False)
+def secondary_vector_index() -> VectorKnowledgeBase | None:
+    if not SECONDARY_DATA_DIRECTORY.is_dir():
+        return None
+    return VectorKnowledgeBase(SECONDARY_DATA_DIRECTORY)
 
 
 @st.cache_data(ttl=300, show_spinner=False)

@@ -223,6 +223,8 @@ def test_hybrid_retrieval_deduplicates_and_prefers_source_diversity() -> None:
         ("Brief me about the company code of conduct", "broad"),
         ("Give me an overview of the employee handbook", "broad"),
         ("Explain the annual sustainability report", "broad"),
+        ("Give me a summary of Haleon 2026 half year results", "targeted"),
+        ("Summarize the Q2 2026 financial results", "targeted"),
         ("What is the Speak Up process?", "targeted"),
         ("Tell me about the reporting procedure", "targeted"),
         ("Where can I report a concern?", "targeted"),
@@ -324,6 +326,43 @@ def test_broad_retrieval_deduplicates_children_from_the_same_parent_location() -
     assert results[0].display_label == "policy.pdf — page 3"
 
 
+def test_financial_summary_parent_retrieval_stays_with_primary_document() -> None:
+    chunks = [
+        VectorChunk(
+            0,
+            "hy26-statement.pdf",
+            "Revenue was 5,602 million.",
+            "page 1",
+            "page 1",
+            0,
+            "Half year 2026 revenue was 5,602 million and operating profit increased.",
+        ),
+        VectorChunk(
+            1,
+            "annual-report-2024.pdf",
+            "Historical governance and privacy policy.",
+            "page 80",
+            "page 80",
+            0,
+            "Historical governance, privacy, and risk policy.",
+        ),
+    ]
+    dense = [
+        SearchResult("hy26-statement.pdf", chunks[0].text, 0.9, 0),
+        SearchResult("annual-report-2024.pdf", chunks[1].text, 0.8, 1),
+    ]
+
+    results = broad_rank(
+        "Summarize Haleon 2026 half year results",
+        chunks,
+        dense,
+        cover_policy_topics=False,
+    )
+
+    assert {result.source for result in results} == {"hy26-statement.pdf"}
+    assert "revenue was 5,602 million" in results[0].text.casefold()
+
+
 def test_targeted_retrieval_remains_compact_child_evidence() -> None:
     child = "Focused reporting process."
     parent = child + " " + ("Broader background. " * 50)
@@ -366,6 +405,20 @@ def test_milvus_lite_indexes_searches_and_reuses_database(tmp_path: Path) -> Non
     metadata = json.loads(database_path.with_suffix(".metadata.json").read_text())
     assert metadata["chunking"] == "hierarchical-location-v2"
     assert metadata["retrieval"] == "hierarchical-rrf-coverage-v2"
+
+
+def test_default_milvus_database_is_isolated_per_corpus(tmp_path: Path) -> None:
+    primary_directory = tmp_path / "data"
+    secondary_directory = tmp_path / "data_2"
+    primary_directory.mkdir()
+    secondary_directory.mkdir()
+
+    primary = VectorKnowledgeBase(primary_directory, embedding=DeterministicEmbedding())
+    secondary = VectorKnowledgeBase(secondary_directory, embedding=DeterministicEmbedding())
+
+    assert primary.database_path == tmp_path / ".olympus" / "milvus_lite.db"
+    assert secondary.database_path == tmp_path / ".olympus" / "data_2.milvus_lite.db"
+    assert primary.database_path != secondary.database_path
 
 
 def test_milvus_reuses_fingerprint_and_rebuilds_in_bounded_batches(tmp_path: Path) -> None:

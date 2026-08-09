@@ -28,6 +28,11 @@ _NARROW_FOCUS = re.compile(
     r"\b(?:process|procedure|steps?|deadline|contact|phone|email|where|when|who)\b",
     re.IGNORECASE,
 )
+_FINANCIAL_RESULTS_FOCUS = re.compile(
+    r"\b(?:financial\s+results?|half[- ]year\s+results?|quarterly\s+results?|"
+    r"q[1-4]\s+(?:results?|earnings)|earnings\s+(?:release|results?))\b",
+    re.IGNORECASE,
+)
 
 _TOKEN_PATTERN = re.compile(r"[\w'-]+", re.UNICODE)
 
@@ -93,6 +98,8 @@ class IndexSummary:
 
 
 def classify_query(query: str) -> QueryMode:
+    if is_financial_results_query(query):
+        return "targeted"
     cue = _BROAD_CUE.search(query)
     if cue is None:
         return "targeted"
@@ -100,6 +107,10 @@ def classify_query(query: str) -> QueryMode:
     if not _tokens(subject) or _NARROW_FOCUS.search(subject):
         return "targeted"
     return "broad"
+
+
+def is_financial_results_query(query: str) -> bool:
+    return _FINANCIAL_RESULTS_FOCUS.search(query) is not None
 
 
 def hybrid_rank(
@@ -159,6 +170,8 @@ def broad_rank(
     chunks: Sequence[VectorChunk],
     dense_results: Sequence[SearchResult],
     limit: int = BROAD_RESULT_LIMIT,
+    *,
+    cover_policy_topics: bool = True,
 ) -> list[SearchResult]:
     if limit <= 0:
         return []
@@ -203,18 +216,19 @@ def broad_rank(
 
     primary = [item for item in candidates if item[0].source == primary_source]
     related = [item for item in candidates if item[0].source != primary_source]
-    for topic in POLICY_TOPIC_PATTERNS:
-        match = next(
-            (item for item in primary if topic in evidence_topics(item[0].parent_text)), None
-        )
-        if match is not None:
-            add(match)
-            continue
-        match = next(
-            (item for item in related if topic in evidence_topics(item[0].parent_text)), None
-        )
-        if match is not None:
-            add(match)
+    if cover_policy_topics:
+        for topic in POLICY_TOPIC_PATTERNS:
+            match = next(
+                (item for item in primary if topic in evidence_topics(item[0].parent_text)), None
+            )
+            if match is not None:
+                add(match)
+                continue
+            match = next(
+                (item for item in related if topic in evidence_topics(item[0].parent_text)), None
+            )
+            if match is not None:
+                add(match)
     for candidate in primary:
         add(candidate)
 

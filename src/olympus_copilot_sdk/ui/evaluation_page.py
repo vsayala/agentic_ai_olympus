@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 from dataclasses import replace
 from typing import cast
@@ -16,6 +17,22 @@ from olympus_copilot_sdk.evaluation.comparison import (
 from olympus_copilot_sdk.evaluation.metrics import ResponseMetrics
 from olympus_copilot_sdk.knowledge_01.agents import KnowledgeOrchestrator, Stage
 from olympus_copilot_sdk.ui.common import DATA_DIRECTORY, apply_theme, evaluation_records
+
+logger = logging.getLogger(__name__)
+BASELINE_RUNNING_PREFIX = "olympus_baseline_running_"
+
+
+def render_baseline_action(index: int) -> bool:
+    running_key = f"{BASELINE_RUNNING_PREFIX}{index}"
+    baseline_running = bool(st.session_state.get(running_key, False))
+    return (
+        st.button(
+            "Run 01_Knowledge baseline",
+            key=f"baseline_{index}",
+            disabled=baseline_running,
+        )
+        and not baseline_running
+    )
 
 
 def render_evaluation_page(go_back: Callable[[], None]) -> None:
@@ -44,7 +61,9 @@ def _render_record(records: list[EvaluationRecord], index: int, record: Evaluati
         _metric_panel("02_Vector_DB", record.vector.metrics)
         st.markdown(record.vector.result.response)
         st.info("01_Knowledge has not been run. No baseline tokens have been spent.")
-        if st.button("Run 01_Knowledge baseline", key=f"baseline_{index}"):
+        running_key = f"{BASELINE_RUNNING_PREFIX}{index}"
+        if render_baseline_action(index):
+            st.session_state[running_key] = True
             orchestrator = KnowledgeOrchestrator(
                 DATA_DIRECTORY,
                 record.model,
@@ -61,12 +80,15 @@ def _render_record(records: list[EvaluationRecord], index: int, record: Evaluati
                 records[index] = asyncio.run(
                     run_knowledge_baseline(record, orchestrator, show_stage)
                 )
-            except Exception as error:
+            except Exception:
+                logger.exception("Knowledge baseline failed")
                 status.update(label="Baseline failed", state="error", expanded=True)
-                st.error(f"The baseline could not complete: {error}")
+                st.error("The baseline could not complete. Check the launcher logs and retry.")
             else:
                 status.update(label="Baseline complete", state="complete", expanded=False)
                 st.rerun()
+            finally:
+                st.session_state[running_key] = False
         return
 
     lexical_column, vector_column = st.columns(2)
