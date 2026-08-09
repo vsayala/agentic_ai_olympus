@@ -18,7 +18,7 @@ who owns final Olympus-wide architecture sign-off.
 - In `knowledge_01/` and `vector_db_02/`, own `agents.py`, `prompts.py`, `skills.py`, `tools.py`,
   and tests of Zeus/Hercules behavior. Loki owns data preparation, indexing, ranking, retrieval,
   persistence, and source lifecycle in those packages.
-- Treat `03_azure_databricks/src/olympus_databricks/hercules.py` and other data-to-agent adapters
+- Treat `src/olympus_copilot_sdk/03_azure_databricks/src/olympus_databricks/hercules.py` and other data-to-agent adapters
   as a joint boundary: Loki signs off retrieval provenance and data contracts; Thor signs off
   Hercules consumption, citation stability, and trust boundaries.
 - Own future agents regardless of name. Keep each agent's role, permissions, tools, prompts, and

@@ -10,10 +10,12 @@ from uuid import uuid4
 import pytest
 from copilot import CopilotSession
 from copilot.session_events import AssistantUsageData, SessionEvent, SessionEventType
+from streamlit.testing.v1 import AppTest
 
 from olympus_copilot_sdk.knowledge_01.retrieval import SearchResult as KnowledgeResult
 from olympus_copilot_sdk.knowledge_01.skills import AgentSkills as KnowledgeSkills
 from olympus_copilot_sdk.knowledge_01.skills import EvidenceRequest as KnowledgeEvidenceRequest
+from olympus_copilot_sdk.ui.chat_page import PROMPT_SUGGESTIONS
 from olympus_copilot_sdk.ui.common import data_folder_inventory
 from olympus_copilot_sdk.vector_db_02 import agents as vector_agents
 from olympus_copilot_sdk.vector_db_02.agents import VectorOrchestrator
@@ -29,6 +31,18 @@ from olympus_copilot_sdk.vector_db_02.skills import EvidenceRequest as VectorEvi
 
 def _empty_prompts() -> list[str]:
     return []
+
+
+def _suggestion_test_app() -> None:
+    import streamlit as st
+
+    from olympus_copilot_sdk.ui.chat_page import render_prompt_suggestions
+
+    suggested_prompt = render_prompt_suggestions()
+    typed_prompt = st.chat_input("Ask Zeus")
+    if prompt := suggested_prompt or typed_prompt:
+        submitted = st.session_state.setdefault("submitted_prompts", [])
+        submitted.append(prompt)
 
 
 @dataclass
@@ -137,12 +151,38 @@ def test_data_folder_inventory_labels_readable_and_unsupported_files() -> None:
         skipped_files=("images/cover.jpg",),
         chunk_count=42,
     )
-
     assert data_folder_inventory(summary) == (
         "Unsupported: images/cover.jpg",
         "Read: notes.md",
         "Read: policies/conduct.pdf",
     )
+
+
+def test_chat_exposes_three_unique_grounded_prompt_suggestions() -> None:
+    assert len(PROMPT_SUGGESTIONS) == 3
+    assert len({suggestion.label for suggestion in PROMPT_SUGGESTIONS}) == 3
+    assert len({suggestion.prompt for suggestion in PROMPT_SUGGESTIONS}) == 3
+    assert all(
+        "data" in suggestion.prompt.lower()
+        or "polic" in suggestion.prompt.lower()
+        or "code of conduct" in suggestion.prompt.lower()
+        for suggestion in PROMPT_SUGGESTIONS
+    )
+
+
+def test_prompt_suggestion_is_submitted_once_with_exact_text() -> None:
+    app = AppTest.from_function(_suggestion_test_app).run()
+
+    assert [button.label for button in app.button] == [
+        suggestion.label for suggestion in PROMPT_SUGGESTIONS
+    ]
+    assert len(app.chat_input) == 1
+
+    app.button[1].click().run()
+    assert app.session_state["submitted_prompts"] == [PROMPT_SUGGESTIONS[1].prompt]
+
+    app.run()
+    assert app.session_state["submitted_prompts"] == [PROMPT_SUGGESTIONS[1].prompt]
 
 
 @pytest.mark.asyncio

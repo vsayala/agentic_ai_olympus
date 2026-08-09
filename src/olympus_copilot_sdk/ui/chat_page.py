@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from dataclasses import dataclass
 
 import streamlit as st
 
@@ -27,6 +28,28 @@ _STAGE_LABELS: dict[Stage, str] = {
 }
 
 
+@dataclass(frozen=True)
+class PromptSuggestion:
+    label: str
+    prompt: str
+
+
+PROMPT_SUGGESTIONS = (
+    PromptSuggestion(
+        "Summarize key policies",
+        "Summarize the main policies in the data folder and cite the relevant sources.",
+    ),
+    PromptSuggestion(
+        "Reporting concerns",
+        "What does the Code of Conduct say about reporting concerns and speaking up?",
+    ),
+    PromptSuggestion(
+        "Compare conduct policies",
+        "Compare the conflicts of interest and anti-bribery policies, citing each source.",
+    ),
+)
+
+
 def render_chat_page() -> None:
     apply_theme()
     records = evaluation_records()
@@ -45,7 +68,9 @@ def render_chat_page() -> None:
             if record.vector.result.sources:
                 st.caption("Sources: " + ", ".join(record.vector.result.sources))
 
-    if prompt := st.chat_input("Ask Zeus about the files in data/"):
+    suggested_prompt = render_prompt_suggestions()
+    typed_prompt = st.chat_input("Ask Zeus about the files in data/")
+    if prompt := suggested_prompt or typed_prompt:
         orchestrator = VectorOrchestrator(
             DATA_DIRECTORY,
             model,
@@ -81,6 +106,20 @@ def render_chat_page() -> None:
                 )
                 status.update(label="Vector answer complete", state="complete", expanded=False)
                 st.rerun()
+
+
+def render_prompt_suggestions() -> str | None:
+    st.caption("Suggested questions")
+    selected: str | None = None
+    for column, suggestion in zip(st.columns(3), PROMPT_SUGGESTIONS, strict=True):
+        if column.button(
+            suggestion.label,
+            key=f"prompt_suggestion_{suggestion.label}",
+            help=suggestion.prompt,
+            use_container_width=True,
+        ):
+            selected = suggestion.prompt
+    return selected
 
 
 def _sidebar(records: list[EvaluationRecord]) -> tuple[str, float, float]:

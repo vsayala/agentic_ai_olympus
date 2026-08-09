@@ -21,6 +21,18 @@ The application uses the same GitHub Copilot model for both agents and reports m
 - Prompt-injection safeguards for retrieved source text
 - Strict Pyright, Ruff, pytest, and coverage configuration
 
+## Copilot Context Efficiency
+
+Use [the Copilot context workflow](docs/COPILOT_CONTEXT.md) to keep chat scope small, attach files
+and folders deliberately, compact or fork sessions, and preserve durable state in
+[the rolling project checkpoint](docs/COPILOT_CHECKPOINT.md). The repository includes on-demand
+`/checkpoint-session` and `/resume-project` prompts under `.github/prompts/`.
+
+`.copilotignore` excludes generated state, local environments, build outputs, the large `data/`
+corpus, and lockfiles on Copilot surfaces that support it. It is not a security boundary, and Agent
+mode does not currently enforce GitHub content exclusion; managed exclusions belong in repository,
+organization, or enterprise Copilot settings as documented in the workflow.
+
 ## Architecture
 
 ```mermaid
@@ -52,6 +64,11 @@ Each numbered package owns a complete agent stack. Its `agents.py` owns lifecycl
 `skills.py` owns bounded reasoning steps, `tools.py` owns model and retrieval operations,
 `prompts.py` owns trust-aware prompt rendering, and `retrieval.py` owns package-local contracts.
 There is intentionally no root agent, prompt, skill, tool, or retrieval implementation.
+
+`.github/skills/` contains on-demand engineering workflows, not application runtime tools. Olympus
+does not use `.github/tools/`; typed runtime capabilities stay in the owning numbered package's
+`tools.py`. The `create-doc-capability` skill defines the governed path for future user-requested
+Markdown, DOCX, or PDF downloads without granting Zeus unrestricted filesystem access.
 
 ### 01_Knowledge and 02_Vector_DB
 

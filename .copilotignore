@@ -1,0 +1,79 @@
+# Keep generated and local-only content out of supported Copilot context surfaces.
+# This mirrors .gitignore where practical. See docs/COPILOT_CONTEXT.md for
+# Agent mode limitations and authoritative enterprise content exclusion.
+
+# Operating-system and editor metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+.history/
+
+# Python caches and virtual environments
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+.python-version
+**/.venv/
+**/venv/
+**/env/
+**/ENV/
+
+# Test, coverage, lint, and type-check output
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.pyre/
+**/.pytype/
+**/.coverage
+**/.coverage.*
+**/coverage.xml
+**/htmlcov/
+**/.pytestdebug.log
+
+# Build output and dependencies
+**/build/
+**/dist/
+**/site/
+**/*.egg-info/
+**/.eggs/
+**/pip-wheel-metadata/
+**/node_modules/
+**/vendor/
+
+# Secrets, local runtime state, logs, and databases
+**/.env
+**/.env.*
+!**/.env.example
+**/.streamlit/secrets.toml
+**/.copilot/
+**/copilot-data/
+**/.olympus/
+**/.databricks/
+**/*.log
+**/*.pid
+**/*.pid.lock
+**/*.sqlite
+**/*.sqlite3
+**/*.db
+
+# Temporary and generated documentation files
+**/*.tmp
+**/*.temp
+**/*.bak
+**/*.swp
+**/*.swo
+**/*~
+**/.cache/
+**/tmp/
+**/temp/
+**/.ipynb_checkpoints/
+**/docs/_build/
+
+# Large reproducible inputs that rarely help code-generation context
+/data/**
+/uv.lock
+/src/olympus_copilot_sdk/03_azure_databricks/uv.lock

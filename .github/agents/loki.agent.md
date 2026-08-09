@@ -17,7 +17,7 @@ sign-off.
 - Own `knowledge_01/` data extraction, lexical indexing, retrieval, ranking, and source contracts.
 - Own `vector_db_02/` document processing, chunking, embeddings, Milvus lifecycle, retrieval,
    ranking, citation provenance, and source contracts.
-- Own `03_azure_databricks/` ingestion, transformation, Unity Catalog, retrieval adapters,
+- Own `src/olympus_copilot_sdk/03_azure_databricks/` ingestion, transformation, Unity Catalog, retrieval adapters,
    serving data contracts, bundles, CI/CD, and platform governance.
 - Own future data sources, databases, indexes, retrieval engines, evaluation data contracts, and
    data-engineering platforms unless Odin assigns a more specific steward.
@@ -57,7 +57,7 @@ sign-off.
 ## Validation
 
 For local retrieval work, run the root quality gate and temporary-database lifecycle tests. For
-Databricks work, also run from `03_azure_databricks`:
+Databricks work, also run from `src/olympus_copilot_sdk/03_azure_databricks`:
 
 ```bash
 uv sync --extra dev --locked

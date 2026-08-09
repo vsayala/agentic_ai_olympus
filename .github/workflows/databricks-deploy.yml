@@ -3,12 +3,12 @@ name: Azure Databricks bundle
 on:
   pull_request:
     paths:
-      - "03_azure_databricks/**"
+      - "src/olympus_copilot_sdk/03_azure_databricks/**"
       - ".github/workflows/databricks-deploy.yml"
   push:
     branches: [main]
     paths:
-      - "03_azure_databricks/**"
+      - "src/olympus_copilot_sdk/03_azure_databricks/**"
       - ".github/workflows/databricks-deploy.yml"
   workflow_dispatch:
     inputs:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: 03_azure_databricks
+        working-directory: src/olympus_copilot_sdk/03_azure_databricks
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -52,7 +52,7 @@ jobs:
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
     defaults:
       run:
-        working-directory: 03_azure_databricks
+        working-directory: src/olympus_copilot_sdk/03_azure_databricks
     steps:
       - uses: actions/checkout@v4
       - uses: databricks/setup-cli@60b64e3937ee15f5a8b914664d1e78a586a9a4da # v1.11.0

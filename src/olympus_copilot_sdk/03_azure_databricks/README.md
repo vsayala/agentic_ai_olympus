@@ -19,8 +19,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/ADD_SOURCE.md](docs/ADD_SOURCE.
 ## Databricks Repo layout
 
 Clone the whole repository into Azure Databricks. Databricks-specific implementation changes stay
-under `03_azure_databricks` (apart from repository-level CI and agent governance). Each numbered
-folder under `notebooks/` is one source and its files are the ordered tasks in that source's job:
+under `src/olympus_copilot_sdk/03_azure_databricks` (apart from repository-level CI and agent
+governance). Each numbered folder under `notebooks/` is one source and its files are the ordered
+tasks in that source's job:
 
 - `01_sharepoint`: connection, landing, parsing, chunking, AI Search sync, serving readiness.
 - `02_meltwater`: raw API landing, bronze, silver, gold, UC function, Genie readiness.
@@ -34,7 +35,7 @@ cross-source code lives under `src/olympus_databricks/utilities`.
 ## Local setup
 
 ```bash
-cd 03_azure_databricks
+cd src/olympus_copilot_sdk/03_azure_databricks
 uv sync --extra dev --locked
 uv run ruff format --check .
 uv run ruff check .

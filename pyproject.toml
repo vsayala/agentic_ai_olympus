@@ -32,6 +32,12 @@ dev = [
 	"ruff>=0.9,<1",
 ]
 
+[tool.hatch.build]
+exclude = ["/src/olympus_copilot_sdk/03_azure_databricks/**"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/src/olympus_copilot_sdk/03_azure_databricks/**"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/olympus_copilot_sdk"]
 
@@ -49,6 +55,7 @@ select = ["E", "F", "I", "B", "S", "UP"]
 pythonVersion = "3.11"
 typeCheckingMode = "strict"
 include = ["src", "tests"]
+exclude = ["src/olympus_copilot_sdk/03_azure_databricks"]
 
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers --cov=src --cov-report=term-missing"
@@ -58,6 +65,7 @@ testpaths = ["tests"]
 [tool.bandit]
 recursive = true
 targets = ["src", "app.py", "run_app.py"]
+exclude_dirs = ["src/olympus_copilot_sdk/03_azure_databricks"]
 
 [tool.coverage.run]
 branch = true

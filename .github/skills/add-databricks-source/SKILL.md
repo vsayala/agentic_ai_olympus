@@ -1,6 +1,6 @@
 ---
 name: add-databricks-source
-description: "Use when adding or designing a new enterprise data source in 03_azure_databricks, including file, API, structured, Genie, AI Search, or external MCP ingestion and retrieval."
+description: "Use when adding or designing a new enterprise data source in src/olympus_copilot_sdk/03_azure_databricks, including file, API, structured, Genie, AI Search, or external MCP ingestion and retrieval."
 argument-hint: "Describe the source shape, system of record, freshness, classification, citation key, and materialization policy"
 user-invocable: true
 disable-model-invocation: false
@@ -8,10 +8,10 @@ disable-model-invocation: false
 
 # Add Databricks Source
 
-All paths in this skill are relative to `03_azure_databricks/` unless they start with
-`03_azure_databricks/` explicitly.
+All paths in this skill are relative to `src/olympus_copilot_sdk/03_azure_databricks/` unless they
+start with `src/olympus_copilot_sdk/03_azure_databricks/` explicitly.
 
-1. Read `03_azure_databricks/ARCHITECTURE.md`, `docs/ADD_SOURCE.md`, the nearest source config,
+1. Read `src/olympus_copilot_sdk/03_azure_databricks/ARCHITECTURE.md`, `docs/ADD_SOURCE.md`, the nearest source config,
    job, implementation, and tests.
 2. State the source shape, system of record, freshness, stable citation key, data classification,
    and whether materialization is permitted.
@@ -19,7 +19,7 @@ All paths in this skill are relative to `03_azure_databricks/` unless they start
    - `files`: raw landing, versioned parsing, semantic chunks, Delta Sync AI Search.
    - `api`: immutable raw payload, bronze, silver, gold, then Genie or deterministic UC function.
    - `mcp`: governed external MCP through Unity AI Gateway; no default copy.
-4. Copy `03_azure_databricks/templates/source.yml` to `configs/<source>.yml`. Validate Unity
+4. Copy `src/olympus_copilot_sdk/03_azure_databricks/templates/source.yml` to `configs/<source>.yml`. Validate Unity
    Catalog identifiers, environment substitutions, secrets ownership, and every placeholder.
 5. Add one source schema and required volumes in `resources/unity_catalog.yml`. Keep dependent
    indexes, Genie spaces, and serving endpoints opt-in until their tables, warehouses, and model
@@ -41,7 +41,7 @@ All paths in this skill are relative to `03_azure_databricks/` unless they start
 9. Run the source validator and nested quality gate:
 
    ```bash
-   cd 03_azure_databricks
+   cd src/olympus_copilot_sdk/03_azure_databricks
    uv sync --extra dev --locked
    uv run python tools/validate_source.py configs/<source>.yml
    uv run ruff format --check .
