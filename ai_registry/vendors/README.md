@@ -2,11 +2,10 @@
 
 | Vendor or component | Purpose | Data boundary | Approval state |
 |---|---|---|---|
-| GitHub Copilot SDK | Model sessions and orchestration | Prompts and supplied evidence | Existing project dependency; production use requires organizational approval |
-| FastEmbed / BAAI model | Local embeddings | Local document chunks | Existing locked dependency |
-| Milvus Lite | Local vector persistence | Local embeddings and source metadata | Existing locked dependency |
-| Streamlit | Local application UI | Session state and displayed results | Existing locked dependency |
-| Azure Databricks | Optional governed cloud retrieval | Configured source and platform data | Deployment approval required |
+| Azure AI Foundry | Planned hosted agent and model boundary | Prompts and authorized evidence | Deployment and model selection require approval |
+| Microsoft 365 Copilot and Teams | Planned user channels | User requests, identity context, and responses | Publication, permissions, and consent require approval |
+| Microsoft SharePoint and Graph | Source authorization and retrieval | Approved documents and delegated identity | OBO scopes and source access require approval |
+| Azure Databricks | Governed retrieval and data platform | Unity Catalog data and normalized evidence | Workspace resources and deployment require approval |
 
 Contracts, security assessments, subprocessors, data-processing terms, and renewal evidence remain
 in the approved procurement system and must be referenced through the external evidence index when

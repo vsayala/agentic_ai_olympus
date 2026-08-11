@@ -23,7 +23,9 @@ The release tag must be exactly `v<project.version>`.
 
 Application rollback uses the last verified wheel and source revision; never rebuild an old version
 from a newer branch. Verify its provenance and SBOM, redeploy through the same protected environment,
-and run the launcher/retrieval smoke tests.
+run the locked root test suite, and validate the Foundry host and channel configuration. After
+deployment, run authenticated hosted Zeus, OBO authorization/denial, citation, and channel smoke
+tests in the approved environment.
 
 Databricks rollback uses the last reviewed bundle revision and target. Validate the bundle, inspect
 the resource diff, deploy through the protected target environment, and verify source acquisition,

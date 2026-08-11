@@ -5,20 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "olympus-copilot-sdk"
 version = "0.1.0"
-description = "Secure agentic AI integrations for GitHub Copilot, Microsoft 365, Azure AI Foundry, and Databricks."
+description = "Governed Azure AI Foundry, Microsoft 365, SharePoint, and Databricks agent contracts."
 requires-python = ">=3.11,<3.14"
 
-dependencies = [
-	"github-copilot-sdk==1.0.8",
-	"streamlit>=1.47,<2",
-	"beautifulsoup4>=4.13,<5",
-	"lxml>=5,<7",
-	"openpyxl>=3.1,<4",
-	"pypdf>=6.15,<7",
-	"pymilvus[milvus-lite]>=2.6,<3",
-	"fastembed>=0.7,<1",
-	"python-docx>=1.2,<2",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
@@ -27,16 +17,21 @@ dev = [
 	"pre-commit>=4.1,<5",
 	"pyright>=1.1.396,<2",
 	"pytest>=9.0.3,<10",
-	"pytest-asyncio>=0.25,<2",
 	"pytest-cov>=6.0,<8",
 	"ruff>=0.9,<1",
 ]
 
 [tool.hatch.build]
-exclude = ["/src/olympus_copilot_sdk/03_azure_databricks/**"]
+exclude = [
+	"/src/olympus_copilot_sdk/01_sp/**",
+	"/src/olympus_copilot_sdk/02_adb/**",
+]
 
 [tool.hatch.build.targets.sdist]
-exclude = ["/src/olympus_copilot_sdk/03_azure_databricks/**"]
+exclude = [
+	"/src/olympus_copilot_sdk/01_sp/**",
+	"/src/olympus_copilot_sdk/02_adb/**",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/olympus_copilot_sdk"]
@@ -55,17 +50,22 @@ select = ["E", "F", "I", "B", "S", "UP"]
 pythonVersion = "3.11"
 typeCheckingMode = "strict"
 include = ["src", "tests"]
-exclude = ["src/olympus_copilot_sdk/03_azure_databricks"]
+exclude = [
+	"src/olympus_copilot_sdk/01_sp",
+	"src/olympus_copilot_sdk/02_adb",
+]
 
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers --cov=src --cov-report=term-missing"
-asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.bandit]
 recursive = true
-targets = ["src", "app.py", "run_app.py"]
-exclude_dirs = ["src/olympus_copilot_sdk/03_azure_databricks"]
+targets = ["src"]
+exclude_dirs = [
+	"src/olympus_copilot_sdk/01_sp",
+	"src/olympus_copilot_sdk/02_adb",
+]
 
 [tool.coverage.run]
 branch = true

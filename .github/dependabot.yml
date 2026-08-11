@@ -10,7 +10,16 @@ updates:
     open-pull-requests-limit: 5
 
   - package-ecosystem: pip
-    directory: /src/olympus_copilot_sdk/03_azure_databricks
+    directory: /src/olympus_copilot_sdk/01_sp
+    schedule:
+      interval: weekly
+    groups:
+      sharepoint-python-dependencies:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pip
+    directory: /src/olympus_copilot_sdk/02_adb
     schedule:
       interval: weekly
     groups:

@@ -11,12 +11,13 @@ uv run ruff format --check .
 uv run ruff check .
 uv run pyright
 uv run pytest --cov-fail-under=70
-uv run bandit -c pyproject.toml -r src app.py run_app.py
+uv run bandit -c pyproject.toml -r src
 uv run pip-audit
 uv build
 ```
 
-Run nested Databricks checks from `src/olympus_copilot_sdk/03_azure_databricks` when that project
+Run SharePoint checks from `src/olympus_copilot_sdk/01_sp` and Databricks checks from
+`src/olympus_copilot_sdk/02_adb` when those projects
 changes. Cloud readiness additionally requires authenticated bundle validation and a dev smoke test.
 
 ## Review and Release

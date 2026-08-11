@@ -1,0 +1,12 @@
+resources:
+  catalogs:
+    data:
+      name: ${var.catalog}
+      comment: Governed source data and AI assets for Olympus.
+      lifecycle:
+        prevent_destroy: true
+  schemas:
+    source:
+      name: ${var.source_schema}
+      catalog_name: ${resources.catalogs.data.name}
+      comment: Source-owned Vector Search, Genie, or MCP integration assets.

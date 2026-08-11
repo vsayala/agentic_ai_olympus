@@ -34,6 +34,6 @@ jobs:
       - run: uv run pyright
       - run: uv run pytest --cov-fail-under=70
       - run: uv run python -m olympus_copilot_sdk.governance.registry ai_registry
-      - run: uv run bandit -c pyproject.toml -r src app.py run_app.py
+      - run: uv run bandit -c pyproject.toml -r src
       - run: uv run pip-audit
       - run: uv build

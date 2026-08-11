@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
   "system_id": "olympus-vector-chat",
-  "name": "Olympus Vector Chat",
-  "purpose": "Evidence-grounded answers over approved local document corpora.",
-  "deployment_scope": "Repository-controlled local Streamlit application using vector_db_02.",
+  "name": "Olympus Foundry Agent",
+  "purpose": "Evidence-grounded answers over authorized SharePoint and Databricks sources.",
+  "deployment_scope": "Planned Azure AI Foundry Hosted Agent exposed through Teams and Microsoft 365 Copilot.",
   "lifecycle": "active",
   "accountable_owner": "Human product and governance owner",
   "technical_owner": "Odin integration owner",
@@ -11,12 +11,13 @@
     {"component_id": "zeus", "type": "orchestrator-agent", "owner": "Thor"},
     {"component_id": "hercules", "type": "data-corpus-specialist", "owner": "Thor and Loki"},
     {"component_id": "hades", "type": "data-corpus-specialist", "owner": "Thor and Loki"},
-    {"component_id": "vector-db-02", "type": "retrieval-pipeline", "owner": "Loki"},
-    {"component_id": "milvus-lite", "type": "local-vector-store", "owner": "Loki"},
-    {"component_id": "streamlit-chat", "type": "human-interface", "owner": "Hela"}
+    {"component_id": "sharepoint-01", "type": "obo-retrieval-pipeline", "owner": "Loki and Thor"},
+    {"component_id": "databricks-02", "type": "cloud-retrieval-pipeline", "owner": "Loki"},
+    {"component_id": "foundry-hosted-agent", "type": "planned-agent-deployment", "owner": "Thor and Hela"},
+    {"component_id": "m365-copilot", "type": "planned-human-interface", "owner": "Hela"}
   ],
-  "model_providers": ["GitHub Copilot SDK", "FastEmbed BAAI/bge-small-en-v1.5"],
-  "data_categories": ["approved local documents", "user prompts", "citations", "session usage and latency metrics"],
+  "model_providers": ["Azure AI Foundry (planned)"],
+  "data_categories": ["authorized SharePoint documents", "Databricks governed data", "user prompts", "citations", "session usage and latency metrics"],
   "human_oversight": {
     "required": true,
     "mechanism": "Users inspect cited evidence; humans approve consequential use and deployment.",

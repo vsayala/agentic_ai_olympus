@@ -2,9 +2,9 @@
 
 **Status:** Operational description; governance approval pending.
 
-The Evaluation page compares an existing vector answer with `knowledge_01` only after explicit user
-action. It preserves prompt/model parity where required and reports observed usage plus deterministic
-quality proxies. No judge model is used.
+The evaluation package compares externally produced candidate and baseline snapshots. It reports
+provided usage plus deterministic quality proxies and does not execute retrieval, agents, or a
+judge model.
 
 Metrics do not establish factual correctness, fairness, safety, or regulatory compliance. Current
-records are session-only and are unsuitable as durable audit evidence.
+snapshots are caller-provided and are unsuitable as durable audit evidence without approved storage.

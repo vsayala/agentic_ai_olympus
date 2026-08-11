@@ -1,0 +1,11 @@
+{
+  "manifest_version": "replace_me_teams_manifest_version",
+  "app_id": "replace_me_teams_app_id",
+  "name": "replace_me_teams_app_name",
+  "channel": "teams",
+  "hosted_agent_endpoint": "https://replace_me_foundry_project_endpoint.example.invalid",
+  "hosted_agent_deployment": "replace_me_foundry_deployment_name",
+  "sign_in_required": true,
+  "consent_notice": "replace_me_human_approved_consent_notice",
+  "evidence_classification": "STATIC"
+}

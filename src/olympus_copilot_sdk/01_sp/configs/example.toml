@@ -1,0 +1,6 @@
+tenant_id = "<entra-tenant-id>"
+site_id = "<sharepoint-site-id>"
+library_id = "<dedicated-test-library-id>"
+mode = "graph"
+foundry_connection_id = "<foundry-sharepoint-connection-id>"
+graph_endpoint = "https://graph.microsoft.com/beta/copilot/retrieval"

@@ -5,5 +5,7 @@
 /ARCHITECTURE_PROCESS.md @vsayala
 /docs/GOVERNANCE.md @vsayala
 /src/olympus_copilot_sdk/governance/ @vsayala
-/run_app.py @vsayala
-/src/olympus_copilot_sdk/03_azure_databricks/ @vsayala
+/src/olympus_copilot_sdk/foundry/ @vsayala
+/src/olympus_copilot_sdk/channel/ @vsayala
+/src/olympus_copilot_sdk/01_sp/ @vsayala
+/src/olympus_copilot_sdk/02_adb/ @vsayala

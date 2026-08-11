@@ -2,21 +2,20 @@
   "schema_version": "1.0",
   "system_id": "olympus-evaluation",
   "name": "Olympus Evaluation",
-  "purpose": "User-triggered comparison of vector chat with the isolated lexical baseline.",
-  "deployment_scope": "Evaluation page in the local Streamlit application; knowledge_01 runs only on explicit action.",
+  "purpose": "Model-free deterministic comparison of externally produced result snapshots.",
+  "deployment_scope": "Package API consumed by approved evaluation workflows; it does not execute agents or retrieval.",
   "lifecycle": "active",
   "accountable_owner": "Human product and governance owner",
   "technical_owner": "Odin integration owner",
   "components": [
-    {"component_id": "knowledge-01", "type": "lexical-baseline", "owner": "Loki and Thor"},
-    {"component_id": "evaluation-metrics", "type": "deterministic-comparison", "owner": "Loki"},
-    {"component_id": "evaluation-page", "type": "human-interface", "owner": "Hela"}
+    {"component_id": "evaluation-snapshots", "type": "result-contract", "owner": "Loki"},
+    {"component_id": "evaluation-metrics", "type": "deterministic-comparison", "owner": "Loki"}
   ],
-  "model_providers": ["GitHub Copilot SDK"],
-  "data_categories": ["stored session prompt", "vector answer", "baseline answer", "citations", "usage, latency, cost, and deterministic metrics"],
+  "model_providers": ["None (model-free deterministic metrics)"],
+  "data_categories": ["provided query", "candidate answer", "baseline answer", "citations", "usage, latency, cost, and deterministic metrics"],
   "human_oversight": {
     "required": true,
-    "mechanism": "A user explicitly starts the baseline and interprets metrics as operational proxies.",
+    "mechanism": "A user supplies approved snapshots and interprets metrics as operational proxies.",
     "escalation_owner": "Human governance owner"
   },
   "retention": {"schedule": "audit/retention_schedule.md", "owner": "Evaluation and governance owners"},

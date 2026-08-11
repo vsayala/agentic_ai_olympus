@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import time
-from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Literal
 
 from olympus_copilot_sdk.evaluation.metrics import ResponseMetrics, ResultLike, evaluate_response
-from olympus_copilot_sdk.knowledge_01.agents import KnowledgeOrchestrator, Stage
 
 Preference = Literal["01_Knowledge", "02_Vector_DB", "Tie"]
 
@@ -114,14 +111,12 @@ def record_vector_result(
     )
 
 
-async def run_knowledge_baseline(
+def attach_baseline_result(
     record: EvaluationRecord,
-    orchestrator: KnowledgeOrchestrator,
-    on_stage: Callable[[Stage, str], None],
+    result: ResultLike,
+    latency_seconds: float,
 ) -> EvaluationRecord:
-    start = time.perf_counter()
-    result = await orchestrator.answer(record.query, on_stage)
-    return replace(record, lexical=_evaluation(result, time.perf_counter() - start))
+    return replace(record, lexical=_evaluation(result, latency_seconds))
 
 
 def _evaluation(result: ResultLike, latency_seconds: float) -> ApproachEvaluation:

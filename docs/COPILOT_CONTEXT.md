@@ -22,7 +22,7 @@ Content exclusion**:
 - "/data/**"
 - "**/.env"
 - "**/.env.*"
-- "**/.streamlit/secrets.toml"
+- "**/.env.local"
 - "**/.copilot/**"
 - "**/.olympus/**"
 - "**/.venv/**"
@@ -40,7 +40,8 @@ excluded file is absent from the response references. Managed exclusions can tak
 Prefer explicit context over `#codebase`:
 
 - Use `#file:path/to/file.py` for the implementation or test under change.
-- Use `#folder:src/olympus_copilot_sdk/vector_db_02` for one bounded module.
+- Use `#folder:src/olympus_copilot_sdk/foundry` for hosted orchestration or attach one standalone
+  cloud project for retrieval work.
 - Select the relevant lines before opening chat; VS Code includes the active selection implicitly.
 - Add a symbol, terminal selection, browser element, or screenshot only when it proves the behavior.
 - For ignored files that must be inspected, use a deliberate local tool or temporarily adjust the
@@ -102,5 +103,5 @@ fixed percentage savings without measurements from the actual model and session.
 
 Do not split code solely to reduce prompt size. Refactor when a file has multiple responsibilities,
 forces unrelated dependencies to load together, or cannot be tested through a clear interface. Preserve
-package ownership: `knowledge_01`, `vector_db_02`, Databricks, evaluation, and UI stay isolated at their
-existing boundaries.
+package ownership: Foundry, channel, SharePoint, Databricks, evaluation, and governance stay
+isolated at their existing boundaries.

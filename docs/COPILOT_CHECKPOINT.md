@@ -1,64 +1,53 @@
 # Olympus Project Checkpoint
 
-Last updated: 2026-08-09
+Last updated: 2026-08-11
 
 ## Durable Architecture
 
-- Chatbot runs only the production `vector_db_02` workflow: Milvus retrieval, Hercules evidence,
-  then Zeus synthesis.
-- Evaluation runs the isolated `knowledge_01` lexical baseline only after explicit user action.
-- Loki owns data, retrieval, persistence, and Databricks; Thor owns agents and evidence contracts;
-  Hela owns Streamlit UX; Odin owns final integration.
-- Every Odin run requires fresh, typed Loki, Thor, and Hela receipts for one task and revision.
-  Missing, stale, malformed, conditional, or blocked receipts propagate through deterministic
-  precedence; specialists do not invoke one another.
-- The production Milvus Lite database is single-process owned. External probes use temporary data.
+- Azure AI Foundry hosts Zeus as the sole public entry point.
+- Zeus routes deterministically to Hercules for `01_sp`, Hades for `02_adb`, or both.
+- SharePoint/Graph and Databricks enforce source authorization; denied retrieval contains no
+  evidence or citations.
+- `channel/` validates Teams, Microsoft 365 Copilot, Foundry, OBO, consent, and smoke-test config.
+- `evaluation/` compares caller-provided snapshots and does not execute agents or retrieval.
+- Loki owns retrieval/data, Thor owns agents/tools/citations, Hela owns channels/deployment UX, and
+  Odin owns final integration with fresh receipts from all three specialists.
 
-## Current Project State
+## Current State
 
-- The Azure Databricks project lives at
-  `src/olympus_copilot_sdk/03_azure_databricks` and remains independently locked, tested, and built.
-- Root Pyright, Bandit, source distribution, and wheel exclude the nested Databricks project; its own
-  quality and build gates run from the nested project root.
-- The Chatbot sidebar shows the Milvus semantic chunk count and a deterministic Data Folder inventory.
-- Sidebar select, action button, and expander surfaces use accessible green backgrounds with light text.
-- Image-only PDFs produce no synthetic semantic content and are classified as skipped.
-- `.copilotignore` excludes generated state, the large `data/` corpus, and lockfiles on supported
-  Copilot surfaces. Managed GitHub exclusions remain the authoritative enterprise control.
-- `/checkpoint-session` rewrites this bounded file; `/resume-project` starts one task from it without
-  a whole-workspace scan.
-- Root CI covers Python 3.11-3.13 with a 70% coverage floor. Security automation includes CodeQL,
-  dependency review, Dependabot, CODEOWNERS, SHA-pinned actions, and least-privilege permissions.
-- `run_app.py` delegates to package-owned launcher lifecycle code with bounded redacted Copilot CLI
-  diagnostics and deterministic terminate/kill behavior.
+- Retired local UI, launcher, lexical retrieval, Milvus retrieval, and the superseded `03` project
+  are deleted.
+- The root package has no runtime dependencies.
+- `01_sp` and `02_adb` are standalone, dependency-minimal projects with independent lockfiles.
+- `02_adb` is the active Databricks bundle and CI/deployment target.
+- Example channel, SharePoint, and Databricks configurations use explicit `replace_me_` placeholders.
+- Root CI covers Python 3.11-3.13 with a 70% coverage floor; security automation includes CodeQL,
+  dependency review, Dependabot, CODEOWNERS, Bandit, pip-audit, and protected deployment workflows.
 
 ## Last Verified Baseline
 
-- Root Ruff formatting/lint and strict Pyright passed.
-- Root test suite: 57 passed with 73.50% branch-aware coverage (70% required in CI).
-- Nested Databricks test suite: 17 passed; nested Ruff, strict Pyright, Bandit, audit, and build passed.
-- Root and nested dependency audits reported no known vulnerabilities.
-- Root source distribution and wheel contain no nested Databricks entries; the nested wheel contains
-  `olympus_databricks`.
-- Copilot ignore matching excludes heavy tracked inputs and no application Python source. Prompt
-  frontmatter, checkpoint links, and the 120-line checkpoint limit were validated.
-- Root Bandit reported zero issues; root dependency audit reported no known vulnerabilities; root
-  source distribution and wheel built successfully.
+- Root: 43 tests passed with 84.37% branch-aware coverage; Ruff and strict Pyright passed.
+- Root registry validation passed for three systems.
+- Dependency cleanup removed 69 installed legacy packages from the locked environment.
+- Foundry host: 15 focused tests passed.
+- Channel configuration: 10 focused tests passed.
+- SharePoint project: 4 focused tests passed before final integration rerun.
+- Databricks project: 26 focused tests passed before final integration rerun.
 
 ## Open Conditions
 
-- Databricks CLI and authenticated cloud checks are unavailable locally. Before promotion, validate
-  every target, inspect the generated resource graph, and run the dev acquisition/table/retrieval/
-  failure/idempotency smoke workflow.
-- A repository administrator must enable the documented default-branch ruleset, private vulnerability
-  reporting, secret scanning/push protection, and protected deployment-environment reviewers.
-- GitHub-hosted CI, dependency review, and CodeQL do not run until these changes are pushed.
-- The current relocation and context-efficiency changes are not committed unless Git status proves
-  otherwise.
+- Foundry deployment identifiers, approved model/deployment, tenant/app/channel values, and human
+  permission/admin-consent approvals are unresolved.
+- Authenticated Teams and Microsoft 365 Copilot invocation has not run.
+- Authenticated OBO continuity and restricted-PDF authorized/denied-user tests have not run.
+- Databricks CLI/workspace validation and live dev acquisition/retrieval/idempotency checks have not
+  run locally.
+- Static and mocked checks do not establish deployment readiness.
 
-## Starting the Next Session
+## Next Session
 
-1. Attach `#file:docs/COPILOT_CHECKPOINT.md` and the one implementation file or folder being changed.
-2. Run `/resume-project` and state one task.
-3. Read `ARCHITECTURE_PROCESS.md` only when the task crosses ownership boundaries.
-4. Before switching tasks, run `/checkpoint-session` and start a new chat.
+1. Attach this file and one owning implementation or configuration file.
+2. Use the matching skill and specialist for the domain.
+3. For project-wide work, use one task ID/revision, collect fresh Loki/Thor/Hela receipts, validate
+   them, then run Odin.
+4. Never place credentials, tokens, identity claims, source content, or production evidence here.

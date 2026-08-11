@@ -10,6 +10,10 @@ The maintainer will acknowledge a report, assess severity, coordinate remediatio
 advisory when disclosure is appropriate. Never commit secrets; rotate any exposed credential before
 removing it from history.
 
+OBO tokens, identity claims, tenant configuration, SharePoint content, Databricks credentials, and
+Foundry deployment secrets must remain in approved identity and secret-management systems. Do not
+include them in issues, logs, screenshots, fixtures, manifests, receipts, or AI registry evidence.
+
 ## Supported Versions
 
 Security fixes target the current default branch until the project publishes a versioned support

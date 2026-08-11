@@ -1,134 +1,104 @@
 # Olympus Architecture Process
 
-## Non-Negotiable Runtime Flow
+## Runtime Flow
 
-1. Chatbot executes only `02_Vector_DB`.
-2. A vector chat turn performs extraction/index reuse and retrieval against every configured local
-   corpus. Deterministic evidence relevance routes the request to Hercules (`data/`), Hades
-   (`data_2/`), or both. Only selected specialists receive excerpts and make a model call; Zeus
-   synthesizes their typed, cited reports. A single-specialist turn uses two model calls.
-3. The turn stores its exact prompt, model, pricing, vector response, sources, usage, latency, and
-   deterministic metrics as a pending evaluation record.
-4. `01_Knowledge` does not run during Chatbot requests.
-5. Evaluation runs `01_Knowledge` only after the user selects **Run 01_Knowledge baseline**.
-6. The baseline uses the stored prompt and model, then attaches isolated usage and metrics to the
-   existing record.
+1. Teams or Microsoft 365 Copilot invokes Zeus through an Azure AI Foundry Hosted Agent.
+2. Zeus is the only public agent entry point and routes deterministically to Hercules, Hades, or
+   both.
+3. Hercules retrieves authorized SharePoint evidence through `01_sp` using the signed-in user's OBO
+   identity. SharePoint or Microsoft Graph remains the access authority.
+4. Hades retrieves governed Databricks evidence through `02_adb` using Vector Search, Genie, or MCP.
+5. Zeus assigns one collision-free request-local citation namespace and synthesizes only from the
+   returned evidence. Retrieved content and specialist output remain untrusted data.
+6. Missing identity, denied access, and insufficient evidence fail closed without protected content.
+
+Azure AI Search is preferred for unstructured indexed retrieval. Foundry file/vector stores or
+Azure Blob Storage may be used for approved smoke tests when source authorization and stable
+provenance are preserved.
+
+## Package Boundaries
+
+- `foundry/`: Zeus hosting, routing, stages, normalized agent evidence, citations, synthesis, and
+  model-facing contracts. Thor owns agent semantics; Loki co-reviews provenance and denial fields.
+- `channel/`: Teams and Microsoft 365 Copilot configuration, Foundry endpoint/deployment checks,
+  OBO sign-in and consent experience, readiness evidence classification, and channel failures.
+  Hela owns this boundary.
+- `01_sp/`: SharePoint/Graph retrievers, OBO forwarding, source authorization, and provenance. Loki
+  owns retrieval; Thor reviews agent-facing tool permissions; Hela reviews sign-in and denial UX.
+- `02_adb/`: Databricks Vector Search, Genie, MCP, Unity Catalog, bundle resources, and source
+  lifecycle. Loki owns this boundary.
+- `evaluation/`: model-free snapshots and deterministic operational metrics. It does not execute
+  retrieval or agents.
+- `governance/` and `ai_registry/`: receipt validation, durable system inventory, control metadata,
+  assessments, and external-evidence references.
+
+The root package has no runtime dependencies. `01_sp` and `02_adb` are independently locked,
+tested, built, and deployed. They do not import each other. Runtime tools remain in each owning
+package's `tools.py`; `tools.md` documents larger tool sets without granting capabilities. Do not
+create a root tool registry.
 
 ## Ownership
 
-The project uses four architecture stewards:
+- **Loki** owns retrieval authorization, provenance, ingestion, indexes, persistence, Azure AI
+  Search, SharePoint/Graph, Databricks, Unity Catalog, Genie, MCP, and evaluation data contracts.
+- **Thor** owns Zeus, Hercules, Hades, hosted orchestration, prompts, synthesis, model calls, tool
+  permissions, evidence consumption, and citations.
+- **Hela** owns Teams and Microsoft 365 Copilot manifests/configuration, Foundry deployment checks,
+  sign-in and consent experience, accessibility, readiness evidence, and user-visible failures.
+- **Odin** owns project-wide integration and final status. Every Odin run requires fresh Loki, Thor,
+  and Hela receipts for the same task, revision, and reviewed artifacts.
 
-- **Loki** owns data and retrieval engineering: `knowledge_01` lexical retrieval,
-   `vector_db_02` document/index/Milvus retrieval,
-   `src/olympus_copilot_sdk/03_azure_databricks`, and future data sources,
-   databases, indexes, retrieval engines, and data platforms.
-- **Thor** owns application agents: Zeus, Hercules, future agents, orchestration, prompts, skills,
-   tools, model sessions, grounding, and agent-facing evidence contracts.
-- **Hela** owns frontend experience: Streamlit navigation, pages, session state, interaction,
-   accessibility, responsive behavior, and user-visible failures.
-- **Odin** owns project-wide architecture and final integration. Every Odin run collects fresh
-   Loki, Thor, and Hela receipts, validates them through the typed governance contract, and
-   preserves their conditions.
+Ownership follows behavior. Shared boundaries require every affected specialist; no specialist
+invokes another. Odin mediates challenges and preserves all conditions.
 
-The repository-safe `ai_registry/` records system inventory, ownership, risk and applicability
-status, control baselines, retention, and external evidence references. Loki, Thor, and Hela review
-fields in their existing domains; Odin validates and integrates the registry. The registry does not
-create a fifth steward, grant runtime permissions, or change application boundaries.
+## Security Invariants
 
-Ownership follows behavior rather than only folders. A retrieval adapter consumed by Hercules
-requires Loki for provenance and Thor for the agent contract. A UI that changes agent or retrieval
-semantics requires Hela plus the affected specialist. `run_app.py` lifecycle changes require Odin
-and Hela, plus Thor or Loki when model or database lifecycle changes.
-
-## Workflow Skills
-
-Use a skill for a repeatable implementation or readiness procedure; use the owning agent directly
-for investigation, review, debugging, or a one-off change. Skills do not replace specialist or Odin
-sign-off.
-
-| Skill | Use it for | Primary steward |
-|---|---|---|
-| `add-databricks-source` | File, API, structured, Genie, AI Search, or MCP source onboarding | Loki |
-| `evolve-local-retrieval` | Local chunking, embeddings, ranking, Milvus, or citation provenance | Loki |
-| `add-document-format` | A new parser or locally indexed file format | Loki |
-| `create-doc-capability` | User-requested Markdown, DOCX, or PDF output from cited results | Thor + Hela + Loki |
-| `add-evaluation-metric` | Deterministic metric, snapshot, comparison, or score changes | Loki + Hela |
-| `add-olympus-agent` | A new application agent or agent capability under Thor | Thor |
-| `add-ui-workflow` | A Streamlit page, interaction, navigation, or session-state workflow | Hela |
-| `verify-ui-readiness` | Pre-merge UI, accessibility, rerun, and launcher verification | Hela |
-
-Do not use `add-olympus-agent` to create `.github` steward agents. Use the VS Code agent
-customization workflow for those. Do not use a generic retrieval-backend scaffold: local lexical,
-Milvus, and Databricks implementations have different persistence, governance, and validation
-requirements.
-
-Do not create `.github/tools/`. It is not an Olympus runtime-tool registry or a supported workspace
-customization primitive. Runtime capabilities remain typed and package-owned in each numbered
-stack's `tools.py`; repeatable implementation procedures belong under `.github/skills/`, and
-external tool integrations belong behind reviewed MCP or extension configuration.
-
-`knowledge_01/` contains the complete original lexical baseline implementation: agents, prompts,
-skills, tools, extraction, chunking, retrieval contracts, and TF-IDF ranking. Code remains local to
-the package; Thor reviews agent semantics while Loki reviews data and retrieval semantics.
-
-`vector_db_02/` contains the complete production vector implementation: agents, prompts, skills,
-tools, extraction, semantic chunking, FastEmbed integration, retrieval contracts, and Milvus Lite
-persistence. Code remains local to the package; Thor reviews agent semantics while Loki reviews
-data and retrieval semantics. Child chunks remain at most 800 characters and retain PDF page metadata;
-adjacent children form bounded parent sections of at most 2,400 characters. Retrieval classifies
-queries deterministically. Targeted mode performs dense and package-local lexical rank fusion,
-deduplication, and source-aware diversity over children. Broad mode aggregates relevance to choose
-a primary document and selects representative parents across distinct locations and generic topic
-families within a fixed evidence budget. Selected excerpts use stable per-response citation IDs.
-The evaluation map resolves IDs to underlying source names, while a separate display map includes
-page, section, or stable chunk location.
-
-Corpus-backed specialists follow one reusable contract: each corpus receives the same extraction,
-chunking, embedding, ranking, and independently persisted Milvus lifecycle; retrieval runs before
-delegation; deterministic relevance selects specialists without requiring users to name folders;
-selected evidence is renumbered into one collision-free citation namespace. New corpus specialists
-must be registered through this contract rather than added as prompt-only routing branches.
-
-The numbered packages must not import from each other. Shared code outside them is limited to UI
-navigation and stack-neutral evaluation snapshots and metrics.
+1. Prompts, manifests, and hosting metadata never grant data or tool permissions.
+2. Delegated identity is required for OBO tools; app-only substitution is rejected.
+3. Tokens, credentials, raw identity claims, prompts, and source content are never committed or
+   logged as governance evidence.
+4. A denied retrieval result cannot contain evidence, citations, filenames, metadata, or cached
+   protected output.
+5. Stable source identifiers survive retrieval normalization and request-local citation assignment.
+6. External MCP data is not materialized without an approved latency, resilience, retention, or
+   audit requirement.
+7. Placeholder configuration supports static validation only. Authenticated readiness requires
+   approved identities and observed environment results.
 
 ## Change Process
 
-1. Identify whether a change belongs to the production vector stack, baseline stack, evaluation,
-   or UI.
-2. Keep retrieval and agent changes inside the owning numbered package.
-3. Never add automatic baseline execution to Chatbot.
-4. Preserve prompt, model, result-limit, and pricing parity when comparison fairness requires it.
-5. Add a focused test for the owning package before changing adjacent layers.
-6. Run strict Pyright, pytest, Ruff, Bandit, pip-audit, and package build.
-7. For project-wide, release, deployment, or governance work, validate `ai_registry/` and update the
-   affected system record without committing sensitive operational evidence.
-8. Before every Odin run, obtain fresh Loki, Thor, and Hela contract-version `1.0` receipts for the
-   same task, revision, and reviewed artifacts. Validate them as described in
-   [docs/GOVERNANCE.md](docs/GOVERNANCE.md).
-9. Give those receipts to Odin for the only final project-wide sign-off. Odin cannot upgrade a
-   conditional or blocked specialist status to an unconditional pass. Status precedence is
-   `BLOCKED` over `CONDITIONAL PASS` over `PASS`; a missing, malformed, or stale receipt is blocked.
-10. Specialists do not invoke each other. Odin mediates at most two challenge rounds; unresolved
-   disagreement is blocked. Consequential governance and deployment actions require human approval.
+1. Identify the owning package and specialists.
+2. State one local invariant and a check that can falsify the proposed change.
+3. Add or update focused deterministic tests before widening the integration surface.
+4. Run the narrowest check immediately after the first edit, then the applicable root and nested
+   quality gates.
+5. Update setup, configuration, registry, security, and deployment documentation with behavior.
+6. Require human approval before consequential dependency, permission, consent, deployment,
+   production-data, security-policy, or governance-contract changes.
+7. For cloud promotion, validate the target resource graph and run authenticated positive and
+   negative smoke tests. Never infer cloud readiness from local mocks.
+8. For project-wide work, validate the AI registry, collect fresh contract-version `1.0` Loki,
+   Thor, and Hela receipts, validate their artifact hashes, then give them to Odin.
 
-## Evaluation Interpretation
+Status precedence is `BLOCKED` over `CONDITIONAL PASS` over `PASS`. Missing, malformed, stale, or
+changed-artifact receipts are blocked. Odin cannot upgrade a specialist status.
 
-Token counts, model calls, and SDK cost are observed values. Citation validity, source coverage,
-grounded-sentence ratio, token efficiency, and quality score are deterministic operational
-proxies. They do not prove factual correctness. No judge model is used, so metric computation adds
-no model tokens. Canonical source legends are excluded from citation scoring; both stacks are
-evaluated on citations present in the answer body, and annotated legacy source citations remain
-valid only when their exact underlying filename was retrieved. Broad vector results may also expose
-evidence-topic citation completeness derived from retrieved topic-to-citation mappings. It is
-reported separately and does not affect the cross-stack quality score because the lexical baseline
-does not expose a comparable retrieval contract.
+## Verification
 
-## Stateful Vector Gate
+Root:
 
-Milvus Lite is single-process owned by the application. Index construction, collection loading,
-released-state recovery, search, close, and reconnect transitions are serialized by the knowledge
-base `RLock`. Chunking, hierarchy, location, schema, retrieval, content, and embedding-model values
-participate in the fingerprint; an incompatible collection is rebuilt in bounded batches. Tests and
-external probes must use temporary databases and must never open `.olympus/milvus_lite.db` while the
-application owns it.
+```bash
+uv sync --extra dev --locked
+uv run ruff format --check .
+uv run ruff check .
+uv run pyright
+uv run pytest --cov-fail-under=70
+uv run python -m olympus_copilot_sdk.governance.registry ai_registry
+uv run bandit -c pyproject.toml -r src
+uv run pip-audit
+uv build
+```
+
+Run equivalent locked checks inside `01_sp` and `02_adb`. Databricks promotion also requires
+`databricks bundle validate --target <environment>` and an authenticated dev smoke test before any
+higher environment.

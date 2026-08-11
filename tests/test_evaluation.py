@@ -1,15 +1,12 @@
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import cast
 
 import pytest
 
 from olympus_copilot_sdk.evaluation.comparison import (
+    attach_baseline_result,
     record_vector_result,
-    run_knowledge_baseline,
 )
 from olympus_copilot_sdk.evaluation.metrics import evaluate_response
-from olympus_copilot_sdk.knowledge_01.agents import KnowledgeOrchestrator, Stage
 
 
 @dataclass
@@ -35,19 +32,6 @@ class FakeResult:
     citation_map: dict[str, str] | None = None
     query_mode: str = "targeted"
     topic_citation_map: dict[str, tuple[str, ...]] | None = None
-
-
-class FakeKnowledgeOrchestrator:
-    received_query = ""
-
-    async def answer(self, query: str, on_stage: Callable[[Stage, str], None]) -> FakeResult:
-        self.received_query = query
-        return FakeResult(
-            "Baseline. [Source: story.md]",
-            ["story.md"],
-            FakeUsage(40, 10),
-            "01_Knowledge",
-        )
 
 
 def test_vector_record_does_not_spend_or_invent_baseline_usage() -> None:
@@ -148,19 +132,18 @@ def test_topic_completeness_is_unavailable_and_does_not_change_quality_for_basel
     assert baseline_metrics.quality_score == targeted_metrics.quality_score
 
 
-@pytest.mark.asyncio
-async def test_baseline_uses_stored_query_and_preserves_run_configuration() -> None:
+def test_baseline_snapshot_preserves_run_configuration() -> None:
     vector = FakeResult("Vector. [Source: story.md]", ["story.md"], FakeUsage(80, 20))
     record = record_vector_result("Exact stored prompt", vector, 1.5, "saved-model", 1.25, 5.0)
-    orchestrator = FakeKnowledgeOrchestrator()
-
-    completed = await run_knowledge_baseline(
-        record,
-        cast(KnowledgeOrchestrator, orchestrator),
-        lambda stage, detail: None,
+    baseline = FakeResult(
+        "Baseline. [Source: story.md]",
+        ["story.md"],
+        FakeUsage(40, 10),
+        "01_Knowledge",
     )
+    completed = attach_baseline_result(record, baseline, 0.75)
 
-    assert orchestrator.received_query == "Exact stored prompt"
+    assert completed.query == "Exact stored prompt"
     assert (completed.model, completed.input_price, completed.output_price) == (
         "saved-model",
         1.25,

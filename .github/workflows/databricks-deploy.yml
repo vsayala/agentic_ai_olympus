@@ -1,14 +1,14 @@
-name: Azure Databricks bundle
+name: databricks deploy
 
 on:
   pull_request:
     paths:
-      - "src/olympus_copilot_sdk/03_azure_databricks/**"
+      - "src/olympus_copilot_sdk/02_adb/**"
       - ".github/workflows/databricks-deploy.yml"
   push:
     branches: [main]
     paths:
-      - "src/olympus_copilot_sdk/03_azure_databricks/**"
+      - "src/olympus_copilot_sdk/02_adb/**"
       - ".github/workflows/databricks-deploy.yml"
   workflow_dispatch:
     inputs:
@@ -21,40 +21,48 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      BUNDLE_VAR_source_schema: ci_validation
     defaults:
       run:
-        working-directory: src/olympus_copilot_sdk/03_azure_databricks
+        working-directory: src/olympus_copilot_sdk/02_adb
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - uses: databricks/setup-cli@60b64e3937ee15f5a8b914664d1e78a586a9a4da # v1.11.0
       - run: uv sync --extra dev --locked
       - run: uv run ruff format --check .
       - run: uv run ruff check .
       - run: uv run pyright
       - run: uv run pytest
-      - run: uv run bandit -q -c pyproject.toml -r src notebooks tools
+      - run: uv run bandit -q -c pyproject.toml -r src
       - run: uv run pip-audit
+      - run: uv build
+      - run: databricks bundle validate --target dev
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     needs: test
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target || 'dev' }}
-    concurrency: databricks-${{ inputs.target || 'dev' }}
+    environment: ${{ inputs.target }}
+    concurrency: databricks-${{ inputs.target }}
+    permissions:
+      contents: read
+      id-token: write
     env:
       DATABRICKS_AUTH_TYPE: github-oidc
       DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      BUNDLE_VAR_source_schema: ${{ vars.DATABRICKS_SOURCE_SCHEMA }}
     defaults:
       run:
-        working-directory: src/olympus_copilot_sdk/03_azure_databricks
+        working-directory: src/olympus_copilot_sdk/02_adb
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: databricks/setup-cli@60b64e3937ee15f5a8b914664d1e78a586a9a4da # v1.11.0
-      - run: databricks bundle validate --target "${{ inputs.target || 'dev' }}"
-      - run: databricks bundle deploy --target "${{ inputs.target || 'dev' }}"
+      - run: databricks bundle validate --target "${{ inputs.target }}"
+      - run: databricks bundle deploy --target "${{ inputs.target }}"

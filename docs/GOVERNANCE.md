@@ -40,10 +40,12 @@ retention, and evidence identifiers with:
 uv run python -m olympus_copilot_sdk.governance.registry ai_registry
 ```
 
-Loki reviews data, lineage, retrieval, retention, monitoring, and Databricks fields. Thor reviews
-components, models, providers, tools, permissions, guardrails, and model cards. Hela reviews human
-oversight, notices, accessibility, interactions, and user-visible failures. Odin runs validation,
-collects all three receipts, and preserves conditions; Odin is not a policy approver.
+Loki reviews data, lineage, retrieval authorization, retention, monitoring, SharePoint, and
+Databricks fields. Thor reviews components, models, providers, tools, permissions, guardrails, and
+model cards. Hela reviews human oversight, notices, accessibility, interactions, Teams and
+Microsoft 365 Copilot channels, Foundry hosted-agent deployment checks, OBO sign-in continuity,
+and user-visible failures. Odin runs validation, collects all three receipts, and preserves
+conditions; Odin is not a policy approver.
 
 Operational evidence remains in approved external systems. Commit only identifiers, approved
 locations, owners, classifications, retention, and optional hashes. Never commit prompts, source
@@ -65,8 +67,8 @@ production requires a human reviewer.
 
 ## Standards Freshness
 
-A scheduled standards review may inspect authoritative VS Code, GitHub, Python, Streamlit, Copilot
-SDK, Milvus, and Databricks sources. It may only open a proposal containing the source URL and date,
+A scheduled standards review may inspect authoritative VS Code, GitHub, Python, Azure AI Foundry,
+Microsoft 365 Copilot, Teams, Graph, SharePoint, and Databricks sources. It may only open a proposal containing the source URL and date,
 old and new requirements, affected files, risk, patch, validation plan, specialist impact, and human
 approver. It must not silently modify, merge, or deploy repository policy.
 

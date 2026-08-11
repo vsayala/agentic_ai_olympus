@@ -1,0 +1,11 @@
+{
+  "manifest_version": "replace_me_microsoft_365_copilot_manifest_version",
+  "agent_id": "replace_me_microsoft_365_copilot_agent_id",
+  "name": "replace_me_microsoft_365_copilot_agent_name",
+  "channel": "microsoft_365_copilot",
+  "hosted_agent_endpoint": "https://replace_me_foundry_project_endpoint.example.invalid",
+  "hosted_agent_deployment": "replace_me_foundry_deployment_name",
+  "sign_in_required": true,
+  "consent_notice": "replace_me_human_approved_consent_notice",
+  "evidence_classification": "STATIC"
+}

@@ -1,0 +1,9 @@
+catalog = "data"
+source_schema = "replace_me_source"
+strategy = "vector_search"
+vector_search_endpoint = "<vector-search-endpoint>"
+vector_search_index = "data.<source_schema>.<index-name>"
+genie_space_id = "<genie-space-id>"
+warehouse_id = "<sql-warehouse-id>"
+mcp_connection = "<governed-mcp-connection>"
+materialize_mcp = false

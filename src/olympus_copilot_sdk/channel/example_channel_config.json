@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "tenant_id": "replace_me_tenant_id",
+  "app_client_id": "replace_me_app_client_id",
+  "teams_app_id": "replace_me_teams_app_id",
+  "microsoft_365_copilot_agent_id": "replace_me_microsoft_365_copilot_agent_id",
+  "expected_audience": "replace_me_expected_audience",
+  "expected_scopes": ["openid", "profile", "offline_access"],
+  "expected_channels": ["teams", "microsoft_365_copilot"],
+  "sign_in_consent": {
+    "sign_in_required": true,
+    "admin_consent_required": true,
+    "consent_notice": "replace_me_human_approved_consent_notice",
+    "sign_in_label": "replace_me_sign_in_label"
+  },
+  "foundry": {
+    "project_endpoint": "https://replace_me_foundry_project_endpoint.example.invalid",
+    "deployment_name": "replace_me_foundry_deployment_name"
+  },
+  "sharepoint_test": {
+    "site_url": "https://replace_me_sharepoint_site.example.invalid",
+    "restricted_item_reference": "replace_me_restricted_item_reference",
+    "authorized_principal_label": "replace_me_authorized_test_principal",
+    "denied_principal_label": "replace_me_denied_test_principal"
+  },
+  "ownership": {
+    "channel_ux": "hela",
+    "retrieval_authorization": "loki",
+    "agent_tool_semantics": "thor"
+  },
+  "evidence_classification": "STATIC"
+}
