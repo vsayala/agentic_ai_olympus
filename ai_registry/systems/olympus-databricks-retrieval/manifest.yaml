@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "system_id": "olympus-databricks-retrieval",
+  "name": "Olympus Databricks Retrieval",
+  "purpose": "Governed cloud ingestion, transformation, indexing, and retrieval adapters for Olympus.",
+  "deployment_scope": "Standalone Databricks subsystem; production deployment is not asserted by this registry.",
+  "lifecycle": "planned",
+  "accountable_owner": "Human data platform and governance owner",
+  "technical_owner": "Loki data platform owner",
+  "components": [
+    {"component_id": "unity-catalog", "type": "governed-data-platform", "owner": "Loki"},
+    {"component_id": "databricks-jobs", "type": "ingestion-and-transformation", "owner": "Loki"},
+    {"component_id": "retrieval-adapters", "type": "agent-evidence-boundary", "owner": "Loki and Thor"},
+    {"component_id": "asset-bundle", "type": "deployment-definition", "owner": "Loki and Odin"}
+  ],
+  "model_providers": ["Azure Databricks managed AI services when explicitly configured"],
+  "data_categories": ["source-dependent governed data", "retrieval metadata", "job and deployment telemetry"],
+  "human_oversight": {
+    "required": true,
+    "mechanism": "Protected environment approval, source onboarding review, and target-specific validation.",
+    "escalation_owner": "Human data platform and governance owner"
+  },
+  "retention": {"schedule": "audit/retention_schedule.md", "owner": "Source and data platform owners"},
+  "approvers": ["Human data platform owner", "Human governance owner"],
+  "external_evidence": ["root-quality-gate", "databricks-deployment-evidence"],
+  "regulatory": {
+    "role": "provider or deployer role depends on configured source and deployment",
+    "eu_ai_act_classification": "deployment and use-case assessment required before activation",
+    "risk_classification": "unclassified planned subsystem; production blocked pending human review",
+    "classification_rationale": "Risk depends on data sources, model endpoints, users, and deployment target, none of which this repository record approves.",
+    "assessed_by": "GitHub Copilot proposal; human governance approval pending",
+    "assessed_on": "2026-08-11",
+    "next_review_on": "2027-02-11"
+  },
+  "artifacts": {
+    "model_card": "systems/olympus-databricks-retrieval/model_card.md",
+    "change_log": "systems/olympus-databricks-retrieval/change_log.md",
+    "privacy_assessment": "systems/olympus-databricks-retrieval/privacy_assessment.md",
+    "fundamental_rights_assessment": "systems/olympus-databricks-retrieval/fundamental_rights_assessment.md"
+  }
+}

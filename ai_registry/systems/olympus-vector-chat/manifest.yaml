@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "system_id": "olympus-vector-chat",
+  "name": "Olympus Vector Chat",
+  "purpose": "Evidence-grounded answers over approved local document corpora.",
+  "deployment_scope": "Repository-controlled local Streamlit application using vector_db_02.",
+  "lifecycle": "active",
+  "accountable_owner": "Human product and governance owner",
+  "technical_owner": "Odin integration owner",
+  "components": [
+    {"component_id": "zeus", "type": "orchestrator-agent", "owner": "Thor"},
+    {"component_id": "hercules", "type": "data-corpus-specialist", "owner": "Thor and Loki"},
+    {"component_id": "hades", "type": "data-corpus-specialist", "owner": "Thor and Loki"},
+    {"component_id": "vector-db-02", "type": "retrieval-pipeline", "owner": "Loki"},
+    {"component_id": "milvus-lite", "type": "local-vector-store", "owner": "Loki"},
+    {"component_id": "streamlit-chat", "type": "human-interface", "owner": "Hela"}
+  ],
+  "model_providers": ["GitHub Copilot SDK", "FastEmbed BAAI/bge-small-en-v1.5"],
+  "data_categories": ["approved local documents", "user prompts", "citations", "session usage and latency metrics"],
+  "human_oversight": {
+    "required": true,
+    "mechanism": "Users inspect cited evidence; humans approve consequential use and deployment.",
+    "escalation_owner": "Human governance owner"
+  },
+  "retention": {"schedule": "audit/retention_schedule.md", "owner": "Data and governance owners"},
+  "approvers": ["Human governance owner (approval pending for this registry baseline)"],
+  "external_evidence": ["root-quality-gate", "protected-release-evidence"],
+  "regulatory": {
+    "role": "provider and deployer applicability review required per deployment context",
+    "eu_ai_act_classification": "preliminary limited-risk transparency controls; human confirmation required",
+    "risk_classification": "medium internal assistive system; pending human approval",
+    "classification_rationale": "The system assists document research, cites evidence, has no runtime tools, and is prohibited from autonomous consequential decisions.",
+    "assessed_by": "GitHub Copilot proposal; human governance approval pending",
+    "assessed_on": "2026-08-11",
+    "next_review_on": "2027-02-11"
+  },
+  "artifacts": {
+    "model_card": "systems/olympus-vector-chat/model_card.md",
+    "change_log": "systems/olympus-vector-chat/change_log.md",
+    "privacy_assessment": "systems/olympus-vector-chat/privacy_assessment.md",
+    "fundamental_rights_assessment": "systems/olympus-vector-chat/fundamental_rights_assessment.md"
+  }
+}

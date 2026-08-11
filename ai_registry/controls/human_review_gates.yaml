@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "required_for": [
+    "governance-contract changes",
+    "permissions or dependency changes",
+    "deployment or production-data changes",
+    "risk acceptance and exceptions",
+    "consequential use of generated output"
+  ],
+  "automation_limit": "Agents may propose and validate but may not approve, merge, or deploy autonomously.",
+  "coordinator": "Odin",
+  "final_authority": "Human approver"
+}

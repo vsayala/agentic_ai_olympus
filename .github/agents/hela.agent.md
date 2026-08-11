@@ -22,6 +22,8 @@ architecture sign-off.
   states and outputs but must not duplicate orchestration, ranking, ingestion, or persistence.
 - Keep Chatbot and Evaluation behavior distinct: Chatbot runs the production vector workflow;
   Evaluation runs the lexical baseline only after explicit user action.
+- Review `ai_registry/` human oversight, user notices, accessibility evidence, interaction controls,
+  and user-visible error requirements. Odin coordinates registry status.
 - Do not expose credentials, raw prompts containing secrets, hidden system messages, or untrusted
   source content as executable markup.
 

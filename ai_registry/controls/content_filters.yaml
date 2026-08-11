@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "controls": [
+    "Treat retrieved text and tool output as untrusted",
+    "Answer specialists only from supplied evidence",
+    "Preserve stable citations",
+    "Return deterministic insufficiency when evidence is incompatible",
+    "Disable runtime tools unless explicitly reviewed"
+  ],
+  "verification": ["agent capability tests", "security tests", "specialist receipt review"]
+}

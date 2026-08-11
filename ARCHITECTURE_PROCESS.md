@@ -30,6 +30,11 @@ The project uses four architecture stewards:
    Loki, Thor, and Hela receipts, validates them through the typed governance contract, and
    preserves their conditions.
 
+The repository-safe `ai_registry/` records system inventory, ownership, risk and applicability
+status, control baselines, retention, and external evidence references. Loki, Thor, and Hela review
+fields in their existing domains; Odin validates and integrates the registry. The registry does not
+create a fifth steward, grant runtime permissions, or change application boundaries.
+
 Ownership follows behavior rather than only folders. A retrieval adapter consumed by Hercules
 requires Loki for provenance and Thor for the agent contract. A UI that changes agent or retrieval
 semantics requires Hela plus the affected specialist. `run_app.py` lifecycle changes require Odin
@@ -96,13 +101,15 @@ navigation and stack-neutral evaluation snapshots and metrics.
 4. Preserve prompt, model, result-limit, and pricing parity when comparison fairness requires it.
 5. Add a focused test for the owning package before changing adjacent layers.
 6. Run strict Pyright, pytest, Ruff, Bandit, pip-audit, and package build.
-7. Before every Odin run, obtain fresh Loki, Thor, and Hela contract-version `1.0` receipts for the
+7. For project-wide, release, deployment, or governance work, validate `ai_registry/` and update the
+   affected system record without committing sensitive operational evidence.
+8. Before every Odin run, obtain fresh Loki, Thor, and Hela contract-version `1.0` receipts for the
    same task, revision, and reviewed artifacts. Validate them as described in
    [docs/GOVERNANCE.md](docs/GOVERNANCE.md).
-8. Give those receipts to Odin for the only final project-wide sign-off. Odin cannot upgrade a
+9. Give those receipts to Odin for the only final project-wide sign-off. Odin cannot upgrade a
    conditional or blocked specialist status to an unconditional pass. Status precedence is
    `BLOCKED` over `CONDITIONAL PASS` over `PASS`; a missing, malformed, or stale receipt is blocked.
-9. Specialists do not invoke each other. Odin mediates at most two challenge rounds; unresolved
+10. Specialists do not invoke each other. Odin mediates at most two challenge rounds; unresolved
    disagreement is blocked. Consequential governance and deployment actions require human approval.
 
 ## Evaluation Interpretation

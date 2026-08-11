@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "release_blockers": ["citation regression", "permission expansion", "stale review", "retrieval incompatibility"],
+  "operational_signals": ["insufficient-evidence rate", "citation validity", "source coverage", "latency", "model calls", "cost"],
+  "alert_owner": "System technical owner",
+  "note": "Thresholds require an observed baseline and human approval before production deployment."
+}

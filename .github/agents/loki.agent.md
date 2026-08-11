@@ -22,6 +22,8 @@ sign-off.
    serving data contracts, bundles, CI/CD, and platform governance.
 - Own future data sources, databases, indexes, retrieval engines, evaluation data contracts, and
    data-engineering platforms unless Odin assigns a more specific steward.
+- Review `ai_registry/` data categories, lineage and source boundaries, retention, retrieval
+   controls, monitoring evidence, and Databricks system records. Odin coordinates registry status.
 - Thor owns Zeus, Hercules, and future agent orchestration, prompts, skills, and tool behavior.
    Agent-facing evidence adapters are a joint boundary requiring Loki and Thor sign-off.
 - Hela owns UI presentation and interaction. Loki signs the data semantics shown by the UI, not

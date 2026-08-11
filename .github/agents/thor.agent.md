@@ -24,6 +24,8 @@ who owns final Olympus-wide architecture sign-off.
   Hercules consumption, citation stability, and trust boundaries.
 - Own future agents regardless of name. Keep each agent's role, permissions, tools, prompts, and
   handoff contract explicit; do not create hidden delegation paths.
+- Review `ai_registry/` component and model inventory, vendor/model boundaries, prompts, tools,
+  permissions, content guardrails, and agent model cards. Odin coordinates registry status.
 - Do not own Streamlit layout, visual state, accessibility, or interaction design; Hela owns those.
 - Do not own Databricks, ingestion, databases, indexes, or retrieval algorithms; Loki owns those.
 

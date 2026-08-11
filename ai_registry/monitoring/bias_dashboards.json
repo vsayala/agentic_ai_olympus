@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "status": "not-established",
+  "reason": "Current corpora do not contain approved protected-attribute labels for subgroup measurement.",
+  "required_before": "Any consequential or people-impacting deployment",
+  "owner": "Human governance owner"
+}

@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "default_action": "deny",
+  "allowed_inputs": ["approved local corpora", "approved evaluation prompts"],
+  "prohibited_inputs": ["credentials", "secrets", "special-category personal data", "unapproved production data"],
+  "egress": ["No source content or prompts in logs", "No external tools without reviewed configuration"],
+  "exception_approval": "Human governance owner"
+}

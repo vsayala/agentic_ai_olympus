@@ -1,0 +1,4 @@
+system_id,metric,status,source
+olympus-vector-chat,cost_per_answer,observed_per_session,Streamlit evaluation record
+olympus-evaluation,cost_per_comparison,observed_per_session,Streamlit evaluation record
+olympus-databricks-retrieval,cost_per_answer,not_established,approved platform telemetry

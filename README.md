@@ -21,6 +21,7 @@ The application uses the same GitHub Copilot model for both agents and reports m
 - Prompt-injection safeguards for retrieved source text
 - Strict Pyright, Ruff, pytest, and coverage configuration
 - Typed Loki, Thor, and Hela review receipts with deterministic Odin precedence validation
+- Machine-validated AI system registry with ownership, risk, control, retention, and evidence metadata
 - Root CI across Python 3.11-3.13 plus CodeQL, dependency review, Dependabot, and CODEOWNERS
 
 ## Copilot Context Efficiency
@@ -39,6 +40,9 @@ Project-wide deputy governance is defined in [the governance contract](docs/GOVE
 the only coordinator; Loki, Thor, and Hela return immutable evidence-backed receipts that are
 rejected when missing, stale, malformed, or tied to changed artifacts. Agents may propose standards
 updates, but humans retain approval authority for consequential governance and deployment changes.
+The [AI registry](ai_registry/REGISTRY_README.md) inventories governed systems and control metadata;
+it complements task-specific receipts and keeps sensitive operational evidence in approved external
+systems.
 Release versioning, SBOM, provenance, and rollback procedures are defined in
 [the release guide](docs/RELEASE.md).
 

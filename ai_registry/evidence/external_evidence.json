@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "evidence_id": "root-quality-gate",
+      "location": "github-actions://root-quality-gate",
+      "owner": "Engineering owner",
+      "classification": "internal",
+      "retention": "Per repository and GitHub retention settings",
+      "sha256": null
+    },
+    {
+      "evidence_id": "protected-release-evidence",
+      "location": "github-actions://release-artifacts-and-attestations",
+      "owner": "Release approver",
+      "classification": "internal",
+      "retention": "Per release retention policy",
+      "sha256": null
+    },
+    {
+      "evidence_id": "databricks-deployment-evidence",
+      "location": "databricks://approved-workspace/audit-and-job-runs",
+      "owner": "Data platform owner",
+      "classification": "confidential",
+      "retention": "Per approved Databricks workspace policy",
+      "sha256": null
+    }
+  ]
+}

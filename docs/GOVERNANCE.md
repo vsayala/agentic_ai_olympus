@@ -26,6 +26,31 @@ artifacts, unsupported statuses, unevidenced receipts, and challenge rounds abov
 upgrade a specialist status. Missing or blocked receipts produce `ODIN BLOCKED`; otherwise a
 conditional specialist produces `ODIN CONDITIONAL PASS`.
 
+## AI Registry
+
+`ai_registry/` is the durable inventory, risk metadata, control baseline, assessment status, and
+external-evidence index for Olympus systems. It augments receipts: manifests describe the governed
+system over time, while receipts prove what Loki, Thor, and Hela reviewed for one task and revision.
+Neither is a legal approval or a substitute for human authority.
+
+Validate required records, artifact references, ownership, assessment dates, review freshness,
+retention, and evidence identifiers with:
+
+```bash
+uv run python -m olympus_copilot_sdk.governance.registry ai_registry
+```
+
+Loki reviews data, lineage, retrieval, retention, monitoring, and Databricks fields. Thor reviews
+components, models, providers, tools, permissions, guardrails, and model cards. Hela reviews human
+oversight, notices, accessibility, interactions, and user-visible failures. Odin runs validation,
+collects all three receipts, and preserves conditions; Odin is not a policy approver.
+
+Operational evidence remains in approved external systems. Commit only identifiers, approved
+locations, owners, classifications, retention, and optional hashes. Never commit prompts, source
+content, personal data, contracts, credentials, access logs, model transcripts, or decision logs.
+Registry changes require code-owner review and explicit human approval as governance-contract
+changes.
+
 ## Human Authority
 
 Agents may investigate, implement within granted tools, review, and propose changes. Human approval
