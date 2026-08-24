@@ -14,13 +14,14 @@ class Specialist(StrEnum):
 
 
 class Route(StrEnum):
+    FOUNDRY = "foundry"
     SHAREPOINT = "sharepoint"
     DATABRICKS = "databricks"
     BOTH = "both"
 
     @property
     def specialists(self) -> tuple[Specialist, ...]:
-        if self is Route.SHAREPOINT:
+        if self in {Route.FOUNDRY, Route.SHAREPOINT}:
             return (Specialist.HERCULES,)
         if self is Route.DATABRICKS:
             return (Specialist.HADES,)
@@ -62,7 +63,7 @@ def _empty_attributes() -> dict[str, str]:
     return {}
 
 
-class DelegatedToken:
+class RedactedCredential:
     __slots__ = ("_value",)
 
     def __init__(self, value: str) -> None:
@@ -73,21 +74,31 @@ class DelegatedToken:
         return self._value
 
     def __repr__(self) -> str:
-        return "DelegatedToken(<redacted>)"
+        return f"{type(self).__name__}(<redacted>)"
 
     def __str__(self) -> str:
         return "<redacted>"
+
+
+class DelegatedToken(RedactedCredential):
+    pass
+
+
+class FoundryCallContext(RedactedCredential):
+    pass
 
 
 @dataclass(frozen=True)
 class CallerContext:
     subject_id: str
     tenant_id: str
-    token: DelegatedToken = field(repr=False, compare=False)
+    credential: DelegatedToken | FoundryCallContext = field(repr=False, compare=False)
 
     @property
     def is_complete(self) -> bool:
-        return bool(self.subject_id.strip() and self.tenant_id.strip() and self.token.value.strip())
+        return bool(
+            self.subject_id.strip() and self.tenant_id.strip() and self.credential.value.strip()
+        )
 
 
 @dataclass(frozen=True)

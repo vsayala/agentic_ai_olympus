@@ -9,6 +9,7 @@ from olympus_copilot_sdk.foundry import (
     CallerContext,
     DelegatedToken,
     Evidence,
+    FoundryCallContext,
     HostDependencies,
     HostRequest,
     HostStage,
@@ -94,6 +95,7 @@ def _dependencies(
 @pytest.mark.parametrize(
     ("route", "expected", "hercules_calls", "hades_calls"),
     [
+        (Route.FOUNDRY, (Specialist.HERCULES,), 1, 0),
         (Route.SHAREPOINT, (Specialist.HERCULES,), 1, 0),
         (Route.DATABRICKS, (Specialist.HADES,), 0, 1),
         (Route.BOTH, (Specialist.HERCULES, Specialist.HADES), 1, 1),
@@ -238,7 +240,15 @@ def test_fake_synthesizer_is_deterministic_and_token_is_redacted(
     assert hercules.calls[0][1] is caller
     assert synthesizer.requests[0].prompt == "question"
     assert "secret-token" not in repr(caller)
-    assert "secret-token" not in repr(caller.token)
+    assert "secret-token" not in repr(caller.credential)
+
+
+def test_foundry_call_context_is_complete_and_redacted() -> None:
+    caller = CallerContext("user-1", "foundry", FoundryCallContext("opaque-call-id"))
+
+    assert caller.is_complete
+    assert "opaque-call-id" not in repr(caller)
+    assert "opaque-call-id" not in repr(caller.credential)
 
 
 def test_retryable_retrieval_recovers_with_bounded_observability(

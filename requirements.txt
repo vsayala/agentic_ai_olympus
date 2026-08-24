@@ -1,0 +1,6 @@
+.
+agent-framework-foundry==1.10.4
+agent-framework-foundry-hosting==1.0.0b260730
+azure-identity>=1.19,<2
+azure-search-documents>=11.6,<12
+openai>=2.15,<3
